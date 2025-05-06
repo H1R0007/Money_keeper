@@ -9,13 +9,13 @@
 class Date {
 private:
 	int year;
-	int day;
+	int month;
 	int day;
 
 	//Проверка на високосный год
 	bool is_leap_year() const
 	{
-		return (year % 4 == 0 && year % 100 != 0) || (year && 400 == 0)
+		return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
 	}
 
 	//Проверка на кол-во дней в месяце
