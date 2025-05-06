@@ -4,13 +4,13 @@
 #include "Date.h"
 
 
-// Инициализация статической переменной
+// РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃС‚Р°С‚РёС‡РµСЃРєРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№
 int Transaction::next_id = 1;
 
 
 class Transaction {
 private:
-    static int next_id; //Переменная для создания уникальных ID
+    static int next_id; //РџРµСЂРµРјРµРЅРЅР°СЏ РґР»СЏ СЃРѕР·РґР°РЅРёСЏ СѓРЅРёРєР°Р»СЊРЅС‹С… ID
     int id;
     int id;
     double amount;
@@ -19,7 +19,7 @@ private:
     Date date;
     std::string description;
 
-    //Корректировка данных
+    //РљРѕСЂСЂРµРєС‚РёСЂРѕРІРєР° РґР°РЅРЅС‹С…
     void validation() const 
     {
         if (amount <= 0) 
@@ -39,13 +39,13 @@ private:
 public:
     enum class Type {income, expense};
 
-    //Умолчательные конструкторы
+    //РЈРјРѕР»С‡Р°С‚РµР»СЊРЅС‹Рµ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂС‹
     Transaction(double amt, const std::string& cat, Type t, const Date& d, const std::string& desc = "")
         : id(next_id++), amount(amt), category(cat), type(t), date(d), description(desc) {
         validate();
     }
 
-    //Геттеры
+    //Р“РµС‚С‚РµСЂС‹
     int get_id() const { return id; }
     double get_amount() const { return amount; }
     std::string get_category() const { return category; }
@@ -53,7 +53,7 @@ public:
     Date get_date() const { return date; }
     std::string get_description() const { return description; }
 
-    //Корректирующие сеттеры
+    //РљРѕСЂСЂРµРєС‚РёСЂСѓСЋС‰РёРµ СЃРµС‚С‚РµСЂС‹
     void set_amount(double amt) {
         if (amt <= 0) throw std::invalid_argument("Amount must be positive");
         amount = amt;
@@ -69,19 +69,19 @@ public:
         date = d;
     }
 
-    //Метод для получения суммы с учетом типа операции
+    //РњРµС‚РѕРґ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ СЃСѓРјРјС‹ СЃ СѓС‡РµС‚РѕРј С‚РёРїР° РѕРїРµСЂР°С†РёРё
     double get_signed_amount() const {
         return (type == Type::INCOME) ? amount : -amount;
     }
 
-    //Форматированный вывод 
+    //Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРЅС‹Р№ РІС‹РІРѕРґ 
     std::string get_summary() const {
         std::string typeSymbol = (type == Type::INCOME) ? "[+] " : "[-] ";
         return date.toString() + " " + typeSymbol + std::to_string(amount) +
             " (" + category + ") " + description;
     }
 
-    //Перевод данных для вывода ... вывод
+    //РџРµСЂРµРІРѕРґ РґР°РЅРЅС‹С… РґР»СЏ РІС‹РІРѕРґР° ... РІС‹РІРѕРґ
     friend std::ostream& operator<<(std::ostream& os, const Transaction& t) {
         os << t.id << ","
             << t.amount << ","
@@ -92,7 +92,7 @@ public:
         return os;
     }
 
-    //Перегрузка оператора ввода
+    //РџРµСЂРµРіСЂСѓР·РєР° РѕРїРµСЂР°С‚РѕСЂР° РІРІРѕРґР°
     friend std::istream& operator>>(std::istream& is, Transaction& t) {
         char delimiter;
         int type;
