@@ -12,7 +12,6 @@ class Transaction {
 private:
     static int next_id; //Переменная для создания уникальных ID
     int id;
-    int id;
     double amount;
     std::string category;
     Type type;
