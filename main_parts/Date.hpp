@@ -12,13 +12,13 @@ private:
 	int day;
 	int day;
 
-	//Проверка на високосный год
+	//РџСЂРѕРІРµСЂРєР° РЅР° РІРёСЃРѕРєРѕСЃРЅС‹Р№ РіРѕРґ
 	bool is_leap_year() const
 	{
 		return (year % 4 == 0 && year % 100 != 0) || (year && 400 == 0)
 	}
 
-	//Проверка на кол-во дней в месяце
+	//РџСЂРѕРІРµСЂРєР° РЅР° РєРѕР»-РІРѕ РґРЅРµР№ РІ РјРµСЃСЏС†Рµ
 	int day_in_month() const
 	{
 		const int days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -29,7 +29,7 @@ private:
 
 
 public:
-	//Проверка корректности даты
+	//РџСЂРѕРІРµСЂРєР° РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚Рё РґР°С‚С‹
 	bool is_valid() const
 	{
 		return (year >= 2000) &&
@@ -37,13 +37,13 @@ public:
 			(day >= 1 && day <= day_in_month())
 	}
 
-	//Умолчательный конструктор 
+	//РЈРјРѕР»С‡Р°С‚РµР»СЊРЅС‹Р№ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ 
 	Date(int y, int m, int d) : year(y), month(m), day(d)
 	{
 		if (!is_valid()) throw std::invalid_argument("Invalid date");
 	}
 
-	//Установка текущей даты по умолчанию
+	//РЈСЃС‚Р°РЅРѕРІРєР° С‚РµРєСѓС‰РµР№ РґР°С‚С‹ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
 	Date()
 	{
 		std::time_t time = std::time(0);
@@ -53,12 +53,12 @@ public:
 		day = now->tm_mday;
 	}
 
-	//Геттеры
+	//Р“РµС‚С‚РµСЂС‹
 	int get_year() const { return year; }
 	int get_month() const { return month; }
 	int get_day() const { return day; }
 
-	//Сеттеры + проверка корректности 
+	//РЎРµС‚С‚РµСЂС‹ + РїСЂРѕРІРµСЂРєР° РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚Рё 
 	void seet_year(int y)
 	{
 		int temp = year;
@@ -92,7 +92,7 @@ public:
 		}
 	}
 
-	//Форматированный вывод
+	//Р¤РѕСЂРјР°С‚РёСЂРѕРІР°РЅРЅС‹Р№ РІС‹РІРѕРґ
 	std::string to_string() const
 	{
 		std::ostringstream ostrm;
@@ -102,7 +102,7 @@ public:
 		return ostrm.str();
 	}
 
-	//Перегружаем операторы сравнения
+	//РџРµСЂРµРіСЂСѓР¶Р°РµРј РѕРїРµСЂР°С‚РѕСЂС‹ СЃСЂР°РІРЅРµРЅРёСЏ
 	bool operator<(const Date& other) const
 	{
 		return (year < other.year) ||
@@ -115,7 +115,7 @@ public:
 		return year == other.year && month == other.month && month == other.month;
 	}
 
-	//Для работы с файлами(перегрузка ввода/вывода)
+	//Р”Р»СЏ СЂР°Р±РѕС‚С‹ СЃ С„Р°Р№Р»Р°РјРё(РїРµСЂРµРіСЂСѓР·РєР° РІРІРѕРґР°/РІС‹РІРѕРґР°)
 	friend std::ostream& operator<<(std::ostream& os, const Date& d)
 	{
 		os << d.year << " " << d.month << " " << d.day;
