@@ -1,32 +1,29 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
+# Visual Studio files
+.vs/
+Debug/
+Release/
+x64/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.suo
+*.ipch
+*.aps
+*.pdb
+*.user
+*.tlog
+*.log
+*.ilk
 *.obj
+*.idb
 
-# Precompiled Headers
-*.gch
-*.pch
+# CMake
+build/
+CMakeCache.txt
+CMakeFiles/
+*.cmake
+Makefile
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
+# Файлы данных
+*.dat
