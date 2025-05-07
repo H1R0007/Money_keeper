@@ -15,13 +15,13 @@ private:
 
 public:
 
-	//Ïğîâåğêà íà âèñîêîñíûé ãîä
+	//ĞŸÑ€Ğ¾Ğ²ĞµÑ€ĞºĞ° Ğ½Ğ° Ğ²Ğ¸ÑĞ¾ĞºĞ¾ÑĞ½Ñ‹Ğ¹ Ğ³Ğ¾Ğ´
 	bool is_leap_year() const
 	{
 		return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
 	}
 
-	//Ïğîâåğêà íà êîë-âî äíåé â ìåñÿöå
+	//ĞŸÑ€Ğ¾Ğ²ĞµÑ€ĞºĞ° Ğ½Ğ° ĞºĞ¾Ğ»-Ğ²Ğ¾ Ğ´Ğ½ĞµĞ¹ Ğ² Ğ¼ĞµÑÑÑ†Ğµ
 	int day_in_month() const
 	{
 		const int days[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
@@ -30,7 +30,7 @@ public:
 		return days[month - 1];
 	}
 
-	//Ïğîâåğêà êîğğåêòíîñòè äàòû
+	//ĞŸÑ€Ğ¾Ğ²ĞµÑ€ĞºĞ° ĞºĞ¾Ñ€Ñ€ĞµĞºÑ‚Ğ½Ğ¾ÑÑ‚Ğ¸ Ğ´Ğ°Ñ‚Ñ‹
 	bool is_valid() const
 	{
 		return (year >= 2000) &&
@@ -38,21 +38,21 @@ public:
 			(day >= 1 && day <= day_in_month());
 	}
 
-	//Óìîë÷àòåëüíûé êîíñòğóêòîğ 
+	//Ğ£Ğ¼Ğ¾Ğ»Ñ‡Ğ°Ñ‚ĞµĞ»ÑŒĞ½Ñ‹Ğ¹ ĞºĞ¾Ğ½ÑÑ‚Ñ€ÑƒĞºÑ‚Ğ¾Ñ€ 
 	Date(int y, int m, int d) : year(y), month(m), day(d)
 	{
 		if (!is_valid()) throw std::invalid_argument("Invalid date");
 	}
 
-	//Óñòàíîâêà òåêóùåé äàòû ïî óìîë÷àíèş
+	//Ğ£ÑÑ‚Ğ°Ğ½Ğ¾Ğ²ĞºĞ° Ñ‚ĞµĞºÑƒÑ‰ĞµĞ¹ Ğ´Ğ°Ñ‚Ñ‹ Ğ¿Ğ¾ ÑƒĞ¼Ğ¾Ğ»Ñ‡Ğ°Ğ½Ğ¸Ñ
 	Date() {
 		std::time_t time = std::time(nullptr);
 
-		// Äëÿ Windows
+		// Ğ”Ğ»Ñ Windows
 #ifdef _WIN32
 		std::tm now;
 		localtime_s(&now, &time);
-		// Äëÿ Linux/macOS
+		// Ğ”Ğ»Ñ Linux/macOS
 #else
 		std::tm* now = std::localtime(&time);
 #endif
@@ -62,12 +62,12 @@ public:
 		day = now.tm_mday;
 	}
 
-	//Ãåòòåğû
+	//Ğ“ĞµÑ‚Ñ‚ĞµÑ€Ñ‹
 	int get_year() const { return year; }
 	int get_month() const { return month; }
 	int get_day() const { return day; }
 
-	//Ñåòòåğû + ïğîâåğêà êîğğåêòíîñòè 
+	//Ğ¡ĞµÑ‚Ñ‚ĞµÑ€Ñ‹ + Ğ¿Ñ€Ğ¾Ğ²ĞµÑ€ĞºĞ° ĞºĞ¾Ñ€Ñ€ĞµĞºÑ‚Ğ½Ğ¾ÑÑ‚Ğ¸ 
 	void seet_year(int y)
 	{
 		int temp = year;
@@ -101,7 +101,7 @@ public:
 		}
 	}
 
-	//Ôîğìàòèğîâàííûé âûâîä
+	//Ğ¤Ğ¾Ñ€Ğ¼Ğ°Ñ‚Ğ¸Ñ€Ğ¾Ğ²Ğ°Ğ½Ğ½Ñ‹Ğ¹ Ğ²Ñ‹Ğ²Ğ¾Ğ´
 	std::string to_string() const
 	{
 		std::ostringstream ostrm;
@@ -111,7 +111,7 @@ public:
 		return ostrm.str();
 	}
 
-	//Ïåğåãğóæàåì îïåğàòîğû ñğàâíåíèÿ
+	//ĞŸĞµÑ€ĞµĞ³Ñ€ÑƒĞ¶Ğ°ĞµĞ¼ Ğ¾Ğ¿ĞµÑ€Ğ°Ñ‚Ğ¾Ñ€Ñ‹ ÑÑ€Ğ°Ğ²Ğ½ĞµĞ½Ğ¸Ñ
 	bool operator<(const Date& other) const
 	{
 		return (year < other.year) ||
@@ -124,7 +124,7 @@ public:
 		return year == other.year && month == other.month && month == other.month;
 	}
 
-	//Äëÿ ğàáîòû ñ ôàéëàìè(ïåğåãğóçêà ââîäà/âûâîäà)
+	//Ğ”Ğ»Ñ Ñ€Ğ°Ğ±Ğ¾Ñ‚Ñ‹ Ñ Ñ„Ğ°Ğ¹Ğ»Ğ°Ğ¼Ğ¸(Ğ¿ĞµÑ€ĞµĞ³Ñ€ÑƒĞ·ĞºĞ° Ğ²Ğ²Ğ¾Ğ´Ğ°/Ğ²Ñ‹Ğ²Ğ¾Ğ´Ğ°)
 	friend std::ostream& operator<<(std::ostream& os, const Date& d)
 	{
 		os << d.year << " " << d.month << " " << d.day;
