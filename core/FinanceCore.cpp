@@ -37,7 +37,7 @@ void FinanceCore::loadData() {
 }
 
 void FinanceCore::viewIncome() const {
-    std::cout << "\n=== Доходы ===\n";
+    std::cout << "\n=== Р”РѕС…РѕРґС‹ ===\n";
     for (const auto& t : transactions) {
         if (t.get_type() == Transaction::Type::INCOME) {
             std::cout << t.get_summary() << "\n";
@@ -46,7 +46,7 @@ void FinanceCore::viewIncome() const {
 }
 
 void FinanceCore::viewExpenses() const {
-    std::cout << "\n=== Расходы ===\n";
+    std::cout << "\n=== Р Р°СЃС…РѕРґС‹ ===\n";
     for (const auto& t : transactions) {
         if (t.get_type() == Transaction::Type::EXPENSE) {
             std::cout << t.get_summary() << "\n";
@@ -55,33 +55,33 @@ void FinanceCore::viewExpenses() const {
 }
 
 FinanceCore::FinanceCore() {
-    accounts["Общий"] = Account("Общий");
-    currentAccount = &accounts["Общий"];
+    accounts["РћР±С‰РёР№"] = Account("РћР±С‰РёР№");
+    currentAccount = &accounts["РћР±С‰РёР№"];
     loadData();
 }
 
 void FinanceCore::printMainMenu() const {
-    std::cout << "\n=== Главное меню ==="
-        << "\nТекущий счет: " << currentAccount->get_name()
-        << " (Баланс: " << currentAccount->get_balance() << ")"
-        << "\n1. Добавить транзакцию"
-        << "\n2. История операций"
-        << "\n3. Статистика"
-        << "\n4. Управление счетами"
-        << "\n5. Удалить транзакцию"
-        << "\n6. Выход"
-        << "\nВыберите действие: ";
+    std::cout << "\n=== Р“Р»Р°РІРЅРѕРµ РјРµРЅСЋ ==="
+        << "\nРўРµРєСѓС‰РёР№ СЃС‡РµС‚: " << currentAccount->get_name()
+        << " (Р‘Р°Р»Р°РЅСЃ: " << currentAccount->get_balance() << ")"
+        << "\n1. Р”РѕР±Р°РІРёС‚СЊ С‚СЂР°РЅР·Р°РєС†РёСЋ"
+        << "\n2. РСЃС‚РѕСЂРёСЏ РѕРїРµСЂР°С†РёР№"
+        << "\n3. РЎС‚Р°С‚РёСЃС‚РёРєР°"
+        << "\n4. РЈРїСЂР°РІР»РµРЅРёРµ СЃС‡РµС‚Р°РјРё"
+        << "\n5. РЈРґР°Р»РёС‚СЊ С‚СЂР°РЅР·Р°РєС†РёСЋ"
+        << "\n6. Р’С‹С…РѕРґ"
+        << "\nР’С‹Р±РµСЂРёС‚Рµ РґРµР№СЃС‚РІРёРµ: ";
 }
 
 void FinanceCore::showStatistics() const {
     int choice;
     do {
-        std::cout << "\n=== Статистика ==="
-            << "\n1. Общий баланс"
-            << "\n2. По категориям"
-            << "\n3. По месяцам"
-            << "\n4. Назад"
-            << "\nВыберите действие: ";
+        std::cout << "\n=== РЎС‚Р°С‚РёСЃС‚РёРєР° ==="
+            << "\n1. РћР±С‰РёР№ Р±Р°Р»Р°РЅСЃ"
+            << "\n2. РџРѕ РєР°С‚РµРіРѕСЂРёСЏРј"
+            << "\n3. РџРѕ РјРµСЃСЏС†Р°Рј"
+            << "\n4. РќР°Р·Р°Рґ"
+            << "\nР’С‹Р±РµСЂРёС‚Рµ РґРµР№СЃС‚РІРёРµ: ";
 
         std::cin >> choice;
 
@@ -90,7 +90,7 @@ void FinanceCore::showStatistics() const {
         case 2: showByCategory(); break;
         case 3: showByMonth(); break;
         case 4: return;
-        default: std::cout << "Неверный выбор!\n";
+        default: std::cout << "РќРµРІРµСЂРЅС‹Р№ РІС‹Р±РѕСЂ!\n";
         }
     } while (true);
 }
@@ -101,8 +101,8 @@ void FinanceCore::showTotalBalance() const {
             return sum + t.get_signed_amount();
         });
 
-    std::cout << "\n=== Общий баланс ===\n";
-    std::cout << "Текущий баланс: " << balance << " руб.\n";
+    std::cout << "\n=== РћР±С‰РёР№ Р±Р°Р»Р°РЅСЃ ===\n";
+    std::cout << "РўРµРєСѓС‰РёР№ Р±Р°Р»Р°РЅСЃ: " << balance << " СЂСѓР±.\n";
 }
 
 void FinanceCore::showByCategory() const {
@@ -112,9 +112,9 @@ void FinanceCore::showByCategory() const {
         categories[t.get_category()] += t.get_signed_amount();
     }
 
-    std::cout << "\n=== По категориям ===\n";
+    std::cout << "\n=== РџРѕ РєР°С‚РµРіРѕСЂРёСЏРј ===\n";
     for (const auto& [category, amount] : categories) {
-        std::cout << category << ": " << amount << " руб.\n";
+        std::cout << category << ": " << amount << " СЂСѓР±.\n";
     }
 }
 
@@ -127,10 +127,10 @@ void FinanceCore::showByMonth() const {
         months[key] += t.get_signed_amount();
     }
 
-    std::cout << "\n=== По месяцам ===\n";
+    std::cout << "\n=== РџРѕ РјРµСЃСЏС†Р°Рј ===\n";
     for (const auto& [month, amount] : months) {
         std::cout << month.first << "-" << month.second << ": "
-            << amount << " руб.\n";
+            << amount << " СЂСѓР±.\n";
     }
 }
 
@@ -140,14 +140,14 @@ void FinanceCore::runMainMenu() {
     do {
         printMainMenu();
         std::cin >> choice;
-        std::cin.ignore(); // Очистка буфера
+        std::cin.ignore(); // РћС‡РёСЃС‚РєР° Р±СѓС„РµСЂР°
 
         switch (choice) {
         case 1: addTransaction(); break;
         case 2: runTransactionMenu(); break;
         case 3: runStatsMenu(); break;
         case 4: saveData(); return;
-        default: std::cout << "Неверный выбор!\n";
+        default: std::cout << "РќРµРІРµСЂРЅС‹Р№ РІС‹Р±РѕСЂ!\n";
         }
     } while (true);
 }
@@ -160,20 +160,20 @@ void FinanceCore::addTransaction() {
     while (step <= 5 && !cancelled) {
         try {
             switch (step) {
-            case 1: { // Шаг 1: Тип операции
-                std::cout << "\n=== Новая транзакция ===\n";
-                std::cout << "1. Доход\n2. Расход\n0. Отмена\nВыберите тип: ";
+            case 1: { // РЁР°Рі 1: РўРёРї РѕРїРµСЂР°С†РёРё
+                std::cout << "\n=== РќРѕРІР°СЏ С‚СЂР°РЅР·Р°РєС†РёСЏ ===\n";
+                std::cout << "1. Р”РѕС…РѕРґ\n2. Р Р°СЃС…РѕРґ\n0. РћС‚РјРµРЅР°\nР’С‹Р±РµСЂРёС‚Рµ С‚РёРї: ";
                 int type;
                 std::cin >> type;
 
                 if (type == 0) {
                     cancelled = true;
-                    std::cout << "Отменено.\n";
+                    std::cout << "РћС‚РјРµРЅРµРЅРѕ.\n";
                     break;
                 }
 
                 if (type != 1 && type != 2) {
-                    throw std::invalid_argument("Неверный тип операции");
+                    throw std::invalid_argument("РќРµРІРµСЂРЅС‹Р№ С‚РёРї РѕРїРµСЂР°С†РёРё");
                 }
 
                 newTrans.set_type(type == 1 ? Transaction::Type::INCOME : Transaction::Type::EXPENSE);
@@ -181,14 +181,14 @@ void FinanceCore::addTransaction() {
                 break;
             }
 
-            case 2: { // Шаг 2: Сумма
-                std::cout << "Введите сумму (0 для отмены): ";
+            case 2: { // РЁР°Рі 2: РЎСѓРјРјР°
+                std::cout << "Р’РІРµРґРёС‚Рµ СЃСѓРјРјСѓ (0 РґР»СЏ РѕС‚РјРµРЅС‹): ";
                 double amount;
                 std::cin >> amount;
 
                 if (amount == 0) {
                     cancelled = true;
-                    std::cout << "Отменено.\n";
+                    std::cout << "РћС‚РјРµРЅРµРЅРѕ.\n";
                     break;
                 }
 
@@ -197,15 +197,15 @@ void FinanceCore::addTransaction() {
                 break;
             }
 
-            case 3: { // Шаг 3: Категория
-                std::cout << "Введите категорию (0 для отмены): ";
+            case 3: { // РЁР°Рі 3: РљР°С‚РµРіРѕСЂРёСЏ
+                std::cout << "Р’РІРµРґРёС‚Рµ РєР°С‚РµРіРѕСЂРёСЋ (0 РґР»СЏ РѕС‚РјРµРЅС‹): ";
                 std::string category;
                 std::cin.ignore();
                 std::getline(std::cin, category);
 
                 if (category == "0") {
                     cancelled = true;
-                    std::cout << "Отменено.\n";
+                    std::cout << "РћС‚РјРµРЅРµРЅРѕ.\n";
                     break;
                 }
 
@@ -214,19 +214,19 @@ void FinanceCore::addTransaction() {
                 break;
             }
 
-            case 4: { // Шаг 4: Дата
-                std::cout << "Дата (гггг мм дд, 0 0 0 для текущей, -1 для отмены): ";
+            case 4: { // РЁР°Рі 4: Р”Р°С‚Р°
+                std::cout << "Р”Р°С‚Р° (РіРіРіРі РјРј РґРґ, 0 0 0 РґР»СЏ С‚РµРєСѓС‰РµР№, -1 РґР»СЏ РѕС‚РјРµРЅС‹): ";
                 int y, m, d;
                 std::cin >> y >> m >> d;
 
                 if (y == -1) {
                     cancelled = true;
-                    std::cout << "Отменено.\n";
+                    std::cout << "РћС‚РјРµРЅРµРЅРѕ.\n";
                     break;
                 }
 
                 if (y == 0 && m == 0 && d == 0) {
-                    // Используем текущую дату (по умолчанию)
+                    // РСЃРїРѕР»СЊР·СѓРµРј С‚РµРєСѓС‰СѓСЋ РґР°С‚Сѓ (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ)
                     step++;
                     break;
                 }
@@ -237,30 +237,30 @@ void FinanceCore::addTransaction() {
                 break;
             }
 
-            case 5: { // Шаг 5: Описание
-                std::cout << "Введите описание (опционально, 0 для отмены): ";
+            case 5: { // РЁР°Рі 5: РћРїРёСЃР°РЅРёРµ
+                std::cout << "Р’РІРµРґРёС‚Рµ РѕРїРёСЃР°РЅРёРµ (РѕРїС†РёРѕРЅР°Р»СЊРЅРѕ, 0 РґР»СЏ РѕС‚РјРµРЅС‹): ";
                 std::string desc;
                 std::cin.ignore();
                 std::getline(std::cin, desc);
 
                 if (desc == "0") {
                     cancelled = true;
-                    std::cout << "Отменено.\n";
+                    std::cout << "РћС‚РјРµРЅРµРЅРѕ.\n";
                     break;
                 }
 
                 newTrans.set_description(desc);
 
-                // Финализация
+                // Р¤РёРЅР°Р»РёР·Р°С†РёСЏ
                 currentAccount->addTransaction(newTrans);
-                std::cout << "Транзакция успешно добавлена!\n";
+                std::cout << "РўСЂР°РЅР·Р°РєС†РёСЏ СѓСЃРїРµС€РЅРѕ РґРѕР±Р°РІР»РµРЅР°!\n";
                 step++;
                 break;
             }
             }
         }
         catch (const std::exception& e) {
-            std::cerr << "Ошибка: " << e.what() << "\nПопробуйте снова.\n";
+            std::cerr << "РћС€РёР±РєР°: " << e.what() << "\nРџРѕРїСЂРѕР±СѓР№С‚Рµ СЃРЅРѕРІР°.\n";
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
@@ -269,30 +269,30 @@ void FinanceCore::addTransaction() {
 
 void FinanceCore::removeTransaction() {
     if (currentAccount->get_transactions().empty()) {
-        std::cout << "Нет транзакций для удаления.\n";
+        std::cout << "РќРµС‚ С‚СЂР°РЅР·Р°РєС†РёР№ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ.\n";
         return;
     }
 
     viewAllTransactions();
-    std::cout << "Введите ID транзакции для удаления (0 для отмены): ";
+    std::cout << "Р’РІРµРґРёС‚Рµ ID С‚СЂР°РЅР·Р°РєС†РёРё РґР»СЏ СѓРґР°Р»РµРЅРёСЏ (0 РґР»СЏ РѕС‚РјРµРЅС‹): ";
     int id;
     std::cin >> id;
 
     if (id == 0) return;
 
     currentAccount->removeTransaction(id);
-    std::cout << "Транзакция удалена.\n";
+    std::cout << "РўСЂР°РЅР·Р°РєС†РёСЏ СѓРґР°Р»РµРЅР°.\n";
 }
 
 void FinanceCore::runTransactionMenu() {
     int choice;
     do {
-        std::cout << "\n=== История транзакций ==="
-            << "\n1. Все транзакции"
-            << "\n2. Только доходы"
-            << "\n3. Только расходы"
-            << "\n4. Назад"
-            << "\nВыберите действие: ";
+        std::cout << "\n=== РСЃС‚РѕСЂРёСЏ С‚СЂР°РЅР·Р°РєС†РёР№ ==="
+            << "\n1. Р’СЃРµ С‚СЂР°РЅР·Р°РєС†РёРё"
+            << "\n2. РўРѕР»СЊРєРѕ РґРѕС…РѕРґС‹"
+            << "\n3. РўРѕР»СЊРєРѕ СЂР°СЃС…РѕРґС‹"
+            << "\n4. РќР°Р·Р°Рґ"
+            << "\nР’С‹Р±РµСЂРёС‚Рµ РґРµР№СЃС‚РІРёРµ: ";
 
         std::cin >> choice;
 
@@ -301,64 +301,64 @@ void FinanceCore::runTransactionMenu() {
         case 2: viewIncome(); break;
         case 3: viewExpenses(); break;
         case 4: return;
-        default: std::cout << "Неверный выбор!\n";
+        default: std::cout << "РќРµРІРµСЂРЅС‹Р№ РІС‹Р±РѕСЂ!\n";
         }
     } while (true);
 }
 
 void FinanceCore::viewAllTransactions() const {
-    std::cout << "\n=== Все транзакции ===\n";
+    std::cout << "\n=== Р’СЃРµ С‚СЂР°РЅР·Р°РєС†РёРё ===\n";
     for (const auto& t : transactions) {
         std::cout << t.get_summary() << "\n";
     }
 }
 
 void FinanceCore::printTransactionMenu() const {
-    std::cout << "\n=== Меню транзакций ==="
-        << "\n1. Показать все транзакции"
-        << "\n2. Показать доходы"
-        << "\n3. Показать расходы"
-        << "\n4. Сортировать по дате (новые сначала)"
-        << "\n5. Сортировать по сумме"
-        << "\n6. Назад"
-        << "\nВыберите действие: ";
+    std::cout << "\n=== РњРµРЅСЋ С‚СЂР°РЅР·Р°РєС†РёР№ ==="
+        << "\n1. РџРѕРєР°Р·Р°С‚СЊ РІСЃРµ С‚СЂР°РЅР·Р°РєС†РёРё"
+        << "\n2. РџРѕРєР°Р·Р°С‚СЊ РґРѕС…РѕРґС‹"
+        << "\n3. РџРѕРєР°Р·Р°С‚СЊ СЂР°СЃС…РѕРґС‹"
+        << "\n4. РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊ РїРѕ РґР°С‚Рµ (РЅРѕРІС‹Рµ СЃРЅР°С‡Р°Р»Р°)"
+        << "\n5. РЎРѕСЂС‚РёСЂРѕРІР°С‚СЊ РїРѕ СЃСѓРјРјРµ"
+        << "\n6. РќР°Р·Р°Рґ"
+        << "\nР’С‹Р±РµСЂРёС‚Рµ РґРµР№СЃС‚РІРёРµ: ";
 }
 
 void FinanceCore::printStatsMenu() const {
-    std::cout << "\n=== Меню статистики ==="
-        << "\n1. Общий баланс"
-        << "\n2. Статистика по категориям"
-        << "\n3. Статистика по месяцам"
-        << "\n4. Топ-5 самых крупных расходов"
-        << "\n5. Назад"
-        << "\nВыберите действие: ";
+    std::cout << "\n=== РњРµРЅСЋ СЃС‚Р°С‚РёСЃС‚РёРєРё ==="
+        << "\n1. РћР±С‰РёР№ Р±Р°Р»Р°РЅСЃ"
+        << "\n2. РЎС‚Р°С‚РёСЃС‚РёРєР° РїРѕ РєР°С‚РµРіРѕСЂРёСЏРј"
+        << "\n3. РЎС‚Р°С‚РёСЃС‚РёРєР° РїРѕ РјРµСЃСЏС†Р°Рј"
+        << "\n4. РўРѕРї-5 СЃР°РјС‹С… РєСЂСѓРїРЅС‹С… СЂР°СЃС…РѕРґРѕРІ"
+        << "\n5. РќР°Р·Р°Рґ"
+        << "\nР’С‹Р±РµСЂРёС‚Рµ РґРµР№СЃС‚РІРёРµ: ";
 }
 
 void FinanceCore::showTopExpenses() const {
     std::vector<Transaction> expenses;
 
-    // Собираем все расходы
+    // РЎРѕР±РёСЂР°РµРј РІСЃРµ СЂР°СЃС…РѕРґС‹
     std::copy_if(transactions.begin(), transactions.end(),
         std::back_inserter(expenses),
         [](const Transaction& t) {
             return t.get_type() == Transaction::Type::EXPENSE;
         });
 
-    // Сортируем по убыванию суммы
+    // РЎРѕСЂС‚РёСЂСѓРµРј РїРѕ СѓР±С‹РІР°РЅРёСЋ СЃСѓРјРјС‹
     std::sort(expenses.begin(), expenses.end(),
         [](const Transaction& a, const Transaction& b) {
             return a.get_amount() > b.get_amount();
         });
 
-    // Выводим топ-5 или меньше, если расходов меньше 5
-    std::cout << "\n=== Топ-5 самых крупных расходов ===\n";
+    // Р’С‹РІРѕРґРёРј С‚РѕРї-5 РёР»Рё РјРµРЅСЊС€Рµ, РµСЃР»Рё СЂР°СЃС…РѕРґРѕРІ РјРµРЅСЊС€Рµ 5
+    std::cout << "\n=== РўРѕРї-5 СЃР°РјС‹С… РєСЂСѓРїРЅС‹С… СЂР°СЃС…РѕРґРѕРІ ===\n";
     int count = std::min(5, static_cast<int>(expenses.size()));
     for (int i = 0; i < count; ++i) {
         std::cout << i + 1 << ". " << expenses[i].get_summary() << "\n";
     }
 
     if (expenses.empty()) {
-        std::cout << "Нет данных о расходах.\n";
+        std::cout << "РќРµС‚ РґР°РЅРЅС‹С… Рѕ СЂР°СЃС…РѕРґР°С….\n";
     }
 }
 
@@ -385,11 +385,11 @@ void FinanceCore::runStatsMenu() {
         case 5:
             return;
         default:
-            std::cout << "Неверный выбор! Попробуйте снова.\n";
+            std::cout << "РќРµРІРµСЂРЅС‹Р№ РІС‹Р±РѕСЂ! РџРѕРїСЂРѕР±СѓР№С‚Рµ СЃРЅРѕРІР°.\n";
         }
 
         if (choice >= 1 && choice <= 4) {
-            std::cout << "\nНажмите Enter для продолжения...";
+            std::cout << "\nРќР°Р¶РјРёС‚Рµ Enter РґР»СЏ РїСЂРѕРґРѕР»Р¶РµРЅРёСЏ...";
             std::cin.get();
         }
     } while (true);
@@ -398,12 +398,12 @@ void FinanceCore::runStatsMenu() {
 void FinanceCore::manageAccounts() {
     int choice;
     do {
-        std::cout << "\n=== Управление счетами ==="
-            << "\n1. Создать счет"
-            << "\n2. Удалить счет"
-            << "\n3. Выбрать счет"
-            << "\n4. Назад"
-            << "\nВыберите действие: ";
+        std::cout << "\n=== РЈРїСЂР°РІР»РµРЅРёРµ СЃС‡РµС‚Р°РјРё ==="
+            << "\n1. РЎРѕР·РґР°С‚СЊ СЃС‡РµС‚"
+            << "\n2. РЈРґР°Р»РёС‚СЊ СЃС‡РµС‚"
+            << "\n3. Р’С‹Р±СЂР°С‚СЊ СЃС‡РµС‚"
+            << "\n4. РќР°Р·Р°Рґ"
+            << "\nР’С‹Р±РµСЂРёС‚Рµ РґРµР№СЃС‚РІРёРµ: ";
 
         std::cin >> choice;
 
@@ -412,127 +412,127 @@ void FinanceCore::manageAccounts() {
         case 2: deleteAccount(); break;
         case 3: selectAccount(); break;
         case 4: return;
-        default: std::cout << "Неверный выбор!\n";
+        default: std::cout << "РќРµРІРµСЂРЅС‹Р№ РІС‹Р±РѕСЂ!\n";
         }
     } while (true);
 }
 
 void FinanceCore::createAccount() {
     std::string name;
-    std::cout << "Введите название счета: ";
+    std::cout << "Р’РІРµРґРёС‚Рµ РЅР°Р·РІР°РЅРёРµ СЃС‡РµС‚Р°: ";
     std::cin.ignore();
     std::getline(std::cin, name);
 
     if (accounts.find(name) != accounts.end()) {
-        std::cout << "Счет с таким именем уже существует!\n";
+        std::cout << "РЎС‡РµС‚ СЃ С‚Р°РєРёРј РёРјРµРЅРµРј СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚!\n";
         return;
     }
 
     accounts[name] = Account(name);
-    std::cout << "Счет создан!\n";
+    std::cout << "РЎС‡РµС‚ СЃРѕР·РґР°РЅ!\n";
 }
 
 void FinanceCore::selectAccount() {
     if (accounts.empty()) {
-        std::cout << "Нет доступных счетов.\n";
+        std::cout << "РќРµС‚ РґРѕСЃС‚СѓРїРЅС‹С… СЃС‡РµС‚РѕРІ.\n";
         return;
     }
 
-    std::cout << "\n=== Выбор счета ===\n";
+    std::cout << "\n=== Р’С‹Р±РѕСЂ СЃС‡РµС‚Р° ===\n";
     int index = 1;
     for (const auto& [name, account] : accounts) {
         std::cout << index++ << ". " << name
-            << " (Баланс: " << account.get_balance() << ")\n";
+            << " (Р‘Р°Р»Р°РЅСЃ: " << account.get_balance() << ")\n";
     }
-    std::cout << "0. Отмена\n";
+    std::cout << "0. РћС‚РјРµРЅР°\n";
 
-    std::cout << "Выберите счет: ";
+    std::cout << "Р’С‹Р±РµСЂРёС‚Рµ СЃС‡РµС‚: ";
     int choice;
     std::cin >> choice;
 
     if (choice == 0) {
-        std::cout << "Отменено.\n";
+        std::cout << "РћС‚РјРµРЅРµРЅРѕ.\n";
         return;
     }
 
     if (choice < 1 || choice > accounts.size()) {
-        std::cout << "Неверный выбор!\n";
+        std::cout << "РќРµРІРµСЂРЅС‹Р№ РІС‹Р±РѕСЂ!\n";
         return;
     }
 
     auto it = accounts.begin();
     std::advance(it, choice - 1);
     currentAccount = &(it->second);
-    std::cout << "Выбран счет: " << it->first << "\n";
+    std::cout << "Р’С‹Р±СЂР°РЅ СЃС‡РµС‚: " << it->first << "\n";
 }
 
 void FinanceCore::deleteAccount() {
-    if (accounts.size() <= 1) { // Нельзя удалить последний счет
-        std::cout << "Должен остаться хотя бы один счет!\n";
+    if (accounts.size() <= 1) { // РќРµР»СЊР·СЏ СѓРґР°Р»РёС‚СЊ РїРѕСЃР»РµРґРЅРёР№ СЃС‡РµС‚
+        std::cout << "Р”РѕР»Р¶РµРЅ РѕСЃС‚Р°С‚СЊСЃСЏ С…РѕС‚СЏ Р±С‹ РѕРґРёРЅ СЃС‡РµС‚!\n";
         return;
     }
 
-    std::cout << "\n=== Удаление счета ===\n";
+    std::cout << "\n=== РЈРґР°Р»РµРЅРёРµ СЃС‡РµС‚Р° ===\n";
     int index = 1;
     for (const auto& [name, account] : accounts) {
         std::cout << index++ << ". " << name << "\n";
     }
-    std::cout << "0. Отмена\n";
+    std::cout << "0. РћС‚РјРµРЅР°\n";
 
-    std::cout << "Выберите счет для удаления: ";
+    std::cout << "Р’С‹Р±РµСЂРёС‚Рµ СЃС‡РµС‚ РґР»СЏ СѓРґР°Р»РµРЅРёСЏ: ";
     int choice;
     std::cin >> choice;
 
     if (choice == 0) {
-        std::cout << "Отменено.\n";
+        std::cout << "РћС‚РјРµРЅРµРЅРѕ.\n";
         return;
     }
 
     if (choice < 1 || choice > accounts.size()) {
-        std::cout << "Неверный выбор!\n";
+        std::cout << "РќРµРІРµСЂРЅС‹Р№ РІС‹Р±РѕСЂ!\n";
         return;
     }
 
     auto it = accounts.begin();
     std::advance(it, choice - 1);
 
-    // Если удаляем текущий счет, переключаемся на "Общий"
+    // Р•СЃР»Рё СѓРґР°Р»СЏРµРј С‚РµРєСѓС‰РёР№ СЃС‡РµС‚, РїРµСЂРµРєР»СЋС‡Р°РµРјСЃСЏ РЅР° "РћР±С‰РёР№"
     if (currentAccount == &(it->second)) {
-        currentAccount = &accounts["Общий"];
+        currentAccount = &accounts["РћР±С‰РёР№"];
     }
 
     accounts.erase(it);
-    std::cout << "Счет удален.\n";
+    std::cout << "РЎС‡РµС‚ СѓРґР°Р»РµРЅ.\n";
 }
 
 void FinanceCore::renameAccount() {
-    std::cout << "\n=== Переименование счета ===\n";
-    std::cout << "Текущее имя: " << currentAccount->get_name() << "\n";
-    std::cout << "Новое имя (или 0 для отмены): ";
+    std::cout << "\n=== РџРµСЂРµРёРјРµРЅРѕРІР°РЅРёРµ СЃС‡РµС‚Р° ===\n";
+    std::cout << "РўРµРєСѓС‰РµРµ РёРјСЏ: " << currentAccount->get_name() << "\n";
+    std::cout << "РќРѕРІРѕРµ РёРјСЏ (РёР»Рё 0 РґР»СЏ РѕС‚РјРµРЅС‹): ";
 
     std::string newName;
     std::cin.ignore();
     std::getline(std::cin, newName);
 
     if (newName == "0") {
-        std::cout << "Отменено.\n";
+        std::cout << "РћС‚РјРµРЅРµРЅРѕ.\n";
         return;
     }
 
     if (accounts.find(newName) != accounts.end()) {
-        std::cout << "Счет с таким именем уже существует!\n";
+        std::cout << "РЎС‡РµС‚ СЃ С‚Р°РєРёРј РёРјРµРЅРµРј СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓРµС‚!\n";
         return;
     }
 
-    // Создаем новый счет с перенесенными данными
+    // РЎРѕР·РґР°РµРј РЅРѕРІС‹Р№ СЃС‡РµС‚ СЃ РїРµСЂРµРЅРµСЃРµРЅРЅС‹РјРё РґР°РЅРЅС‹РјРё
     accounts[newName] = std::move(*currentAccount);
     accounts[newName].set_name(newName);
 
-    // Удаляем старую запись (если это не "Общий" счет)
-    if (currentAccount->get_name() != "Общий") {
+    // РЈРґР°Р»СЏРµРј СЃС‚Р°СЂСѓСЋ Р·Р°РїРёСЃСЊ (РµСЃР»Рё СЌС‚Рѕ РЅРµ "РћР±С‰РёР№" СЃС‡РµС‚)
+    if (currentAccount->get_name() != "РћР±С‰РёР№") {
         accounts.erase(currentAccount->get_name());
     }
 
     currentAccount = &accounts[newName];
-    std::cout << "Счет переименован.\n";
+    std::cout << "РЎС‡РµС‚ РїРµСЂРµРёРјРµРЅРѕРІР°РЅ.\n";
 }
