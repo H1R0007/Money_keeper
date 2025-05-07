@@ -11,7 +11,7 @@ private:
 
 public:
 
-    Account() : name("Без названия"), balance(0) {}
+    Account() : name("Р‘РµР· РЅР°Р·РІР°РЅРёСЏ"), balance(0) {}
 
     Account(const std::string& accountName) : name(accountName), balance(0) {}
 
@@ -39,6 +39,6 @@ public:
     double get_balance() const { return balance; }
     void set_name(const std::string& newName) { name = newName; }
 
-    // Метод для перемещения транзакций
+    // РњРµС‚РѕРґ РґР»СЏ РїРµСЂРµРјРµС‰РµРЅРёСЏ С‚СЂР°РЅР·Р°РєС†РёР№
     const std::vector<Transaction>& get_transactions() const { return transactions; }
 };
