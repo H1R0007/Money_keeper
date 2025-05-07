@@ -13,7 +13,7 @@ private:
     std::map<std::string, Account> accounts;
     Account* currentAccount;
 
-    // Вспомогательные методы
+    // Р’СЃРїРѕРјРѕРіР°С‚РµР»СЊРЅС‹Рµ РјРµС‚РѕРґС‹
     void printMainMenu() const;
     void printTransactionMenu() const;
     void printStatsMenu() const;
@@ -21,7 +21,7 @@ private:
 public:
     FinanceCore();
 
-    // Основные функции
+    // РћСЃРЅРѕРІРЅС‹Рµ С„СѓРЅРєС†РёРё
     void renameAccount();
     void deleteAccount();
     void selectAccount();
@@ -40,7 +40,7 @@ public:
     void showByMonth() const;
     void showTopExpenses() const;
 
-    // Интерфейс
+    // РРЅС‚РµСЂС„РµР№СЃ
     void runMainMenu();
     void runTransactionMenu();
     void runStatsMenu();
