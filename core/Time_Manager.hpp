@@ -1,47 +1,28 @@
+#pragma once
 #include <string>
 #include <iostream>
 #include <stdexcept>
-#include "Date.h"
-
-
-// Инициализация статической переменной
-int Transaction::next_id = 1;
-
+#include "Date.hpp"
 
 class Transaction {
-private:
-    static int next_id; //Переменная для создания уникальных ID
-    int id;
-    double amount;
-    std::string category;
-    Type type;
-    Date date;
-    std::string description;
-
-    //Корректировка данных
-    void validation() const 
-    {
-        if (amount <= 0) 
-        {
-            throw std::invalid_argument("Amount can`t be negative");
-        }
-        if (category.empty()) 
-        {
-            throw std::invalid_argument("You should choose category");
-        }
-        if (!date.is_valid()) 
-        {
-            throw std::invalid_argument("Invalid format");
-        }
-    }
 
 public:
-    enum class Type {income, expense};
+    enum class Type { INCOME, EXPENSE };
+
+    Transaction()
+        : id(next_id++),
+        amount(0.0),
+        category("Uncategorized"),
+        type(Type::EXPENSE),
+        date(),  // Текущая дата
+        description("")
+    {
+    }
 
     //Умолчательные конструкторы
     Transaction(double amt, const std::string& cat, Type t, const Date& d, const std::string& desc = "")
         : id(next_id++), amount(amt), category(cat), type(t), date(d), description(desc) {
-        validate();
+        validation();
     }
 
     //Геттеры
@@ -68,6 +49,14 @@ public:
         date = d;
     }
 
+
+    void set_type(Type t) { type = t; }
+
+    void set_description(const std::string& desc) { description = desc; }
+
+    void set_id(int new_id) { id = new_id; }
+
+
     //Метод для получения суммы с учетом типа операции
     double get_signed_amount() const {
         return (type == Type::INCOME) ? amount : -amount;
@@ -76,7 +65,7 @@ public:
     //Форматированный вывод 
     std::string get_summary() const {
         std::string typeSymbol = (type == Type::INCOME) ? "[+] " : "[-] ";
-        return date.toString() + " " + typeSymbol + std::to_string(amount) +
+        return date.to_string() + " " + typeSymbol + std::to_string(amount) +
             " (" + category + ") " + description;
     }
 
@@ -104,5 +93,32 @@ public:
         std::getline(is, t.description);
         return is;
     }
+
+private:
+    static inline int next_id = 1;
+    int id;
+    double amount;
+    std::string category;
+    Type type;
+    Date date;
+    std::string description;
+
+    //Корректировка данных
+    void validation() const
+    {
+        if (amount <= 0)
+        {
+            throw std::invalid_argument("Amount can`t be negative");
+        }
+        if (category.empty())
+        {
+            throw std::invalid_argument("You should choose category");
+        }
+        if (!date.is_valid())
+        {
+            throw std::invalid_argument("Invalid format");
+        }
+    }
 };
+
 

@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include <string>
 #include <stdexcept>
@@ -12,10 +13,12 @@ private:
 	int month;
 	int day;
 
+public:
+
 	//Проверка на високосный год
 	bool is_leap_year() const
 	{
-		return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+		return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
 	}
 
 	//Проверка на кол-во дней в месяце
@@ -27,14 +30,12 @@ private:
 		return days[month - 1];
 	}
 
-
-public:
 	//Проверка корректности даты
 	bool is_valid() const
 	{
 		return (year >= 2000) &&
 			(month >= 1 && month <= 12) &&
-			(day >= 1 && day <= day_in_month())
+			(day >= 1 && day <= day_in_month());
 	}
 
 	//Умолчательный конструктор 
@@ -44,13 +45,21 @@ public:
 	}
 
 	//Установка текущей даты по умолчанию
-	Date()
-	{
-		std::time_t time = std::time(0);
+	Date() {
+		std::time_t time = std::time(nullptr);
+
+		// Для Windows
+#ifdef _WIN32
+		std::tm now;
+		localtime_s(&now, &time);
+		// Для Linux/macOS
+#else
 		std::tm* now = std::localtime(&time);
-		year = now->tm_year + 2000;
-		month = now->tm_mon + 1;
-		day = now->tm_mday;
+#endif
+
+		year = now.tm_year + 1900;
+		month = now.tm_mon + 1;
+		day = now.tm_mday;
 	}
 
 	//Геттеры
@@ -66,7 +75,7 @@ public:
 		if (!is_valid())
 		{
 			year = temp;
-			throw std::invalid_argument("Invalid year!")
+			throw std::invalid_argument("Invalid year!");
 		}
 	}
 
@@ -77,7 +86,7 @@ public:
 		if (!is_valid())
 		{
 			month = temp;
-			throw std::invalid_argument("Invalid month!")
+			throw std::invalid_argument("Invalid month!");
 		}
 	}
 
@@ -88,7 +97,7 @@ public:
 		if (!is_valid())
 		{
 			day = temp;
-			throw std::invalid_argument("Invalid day!")
+			throw std::invalid_argument("Invalid day!");
 		}
 	}
 
