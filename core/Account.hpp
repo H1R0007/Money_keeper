@@ -35,6 +35,15 @@ public:
         transactions = std::move(other.transactions);
     }
 
+    void Account::recalculateBalance() {
+        balance = 0;
+        for (const auto& t : transactions) {
+            balance += t.get_signed_amount();
+        }
+    }
+
+
+
     std::string get_name() const { return name; }
     double get_balance() const { return balance; }
     void set_name(const std::string& newName) { name = newName; }

@@ -82,15 +82,37 @@ public:
 
     //Перегрузка оператора ввода
     friend std::istream& operator>>(std::istream& is, Transaction& t) {
-        char delimiter;
+        std::string line;
+        if (!std::getline(is, line)) return is;
+
+        std::istringstream iss(line);
+        char delim;
         int type;
-        is >> t.id >> delimiter
-            >> t.amount >> delimiter
-            >> type >> delimiter;
-        t.type = static_cast<Type>(type);
-        std::getline(is, t.category, ',');
-        is >> t.date >> delimiter;
-        std::getline(is, t.description);
+
+        try {
+            if (!(iss >> t.id >> delim >> t.amount >> delim >> type >> delim)) {
+                throw std::runtime_error("Ошибка чтения формата транзакции");
+            }
+            t.type = static_cast<Transaction::Type>(type);
+
+            // Чтение категории (до запятой)
+            std::getline(iss, t.category, ',');
+
+            // Чтение даты
+            int y, m, d;
+            if (!(iss >> y >> m >> d >> delim)) {
+                throw std::runtime_error("Ошибка чтения даты");
+            }
+            t.date = Date(y, m, d);
+
+            // Остаток строки - описание
+            std::getline(iss, t.description);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Ошибка чтения транзакции: " << e.what() << "\n";
+            is.setstate(std::ios::failbit);
+        }
+
         return is;
     }
 

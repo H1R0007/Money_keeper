@@ -34,12 +34,18 @@ public:
     void viewAllTransactions() const;
     void viewIncome() const;
     void viewExpenses() const;
-    void showStatistics() const;
     void showByCategory() const;
     void showTotalBalance() const;
     void showByMonth() const;
     void showTopExpenses() const;
-
+    void validateData();
+    bool validateData() const;
+    void showCurrentAccountStats() const;
+    Account& getCurrentAccount();
+    void ensureDefaultAccount();
+    std::vector<Transaction> getFilteredTransactions(Transaction::Type type) const;
+    void printTransactionsTable(const std::vector<Transaction>& transactions, const std::string& title) const;
+    
     // Интерфейс
     void runMainMenu();
     void runTransactionMenu();

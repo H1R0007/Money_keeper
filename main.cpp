@@ -3,7 +3,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <clocale>
-#include <Windows.h> // Только для Windows
+#include <Windows.h>
 
 void clearScreen() {
 #ifdef _WIN32
@@ -18,7 +18,7 @@ int main() {
 
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
-    setlocale(LC_ALL, "Russian");
+    setlocale(LC_ALL, "ru_RU.UTF-8");
 
     try {
         clearScreen();

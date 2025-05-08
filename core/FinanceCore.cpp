@@ -5,8 +5,30 @@
 #include <iomanip>
 #include <numeric>
 
+Account& FinanceCore::getCurrentAccount() {
+    if (currentAccount == nullptr) {
+        currentAccount = &accounts["Общий"];
+    }
+    return *currentAccount;
+}
+
+void FinanceCore::ensureDefaultAccount() {
+    if (accounts.empty()) {
+        accounts["Общий"] = Account("Общий");
+    }
+    if (currentAccount == nullptr) {
+        currentAccount = &accounts["Общий"];
+    }
+}
+
 void FinanceCore::saveData() {
+    ensureDefaultAccount(); // Гарантируем наличие счета перед сохранением
+
     std::ofstream file(dataFile);
+    if (!file.is_open()) {
+        throw std::runtime_error("Не удалось открыть файл для сохранения");
+    }
+
     for (const auto& [name, account] : accounts) {
         file << "[Account:" << name << "]\n";
         for (const auto& t : account.get_transactions()) {
@@ -17,46 +39,60 @@ void FinanceCore::saveData() {
 
 void FinanceCore::loadData() {
     std::ifstream file(dataFile);
+    accounts.clear(); // Очищаем существующие счета
+
+    // Создаем общий счет по умолчанию
+    accounts["Общий"] = Account("Общий");
+    currentAccount = &accounts["Общий"];
+
+    if (!file.is_open()) {
+        std::cerr << "Файл данных не найден. Создан новый общий счет.\n";
+        return;
+    }
+
+    std::string currentAccountName;
     std::string line;
-    Account* current = nullptr;
+    bool hasValidData = false;
 
     while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        // Обработка заголовка аккаунта
         if (line.find("[Account:") != std::string::npos) {
-            std::string name = line.substr(9, line.size() - 10);
-            accounts[name] = Account(name);
-            current = &accounts[name];
+            size_t start = line.find(':') + 1;
+            size_t end = line.find(']');
+            if (end == std::string::npos) continue;
+
+            currentAccountName = line.substr(start, end - start);
+            accounts[currentAccountName] = Account(currentAccountName);
+            hasValidData = true;
         }
-        else if (current) {
-            std::istringstream iss(line);
-            Transaction t;
-            if (iss >> t) {
-                current->addTransaction(t);
+        // Обработка транзакции
+        else if (!currentAccountName.empty()) {
+            try {
+                std::istringstream iss(line);
+                Transaction t;
+                if (iss >> t) {
+                    accounts[currentAccountName].addTransaction(t);
+                }
+            }
+            catch (const std::exception& e) {
+                std::cerr << "Ошибка чтения транзакции: " << e.what()
+                    << "\nСтрока: " << line << "\n";
             }
         }
     }
-}
 
-void FinanceCore::viewIncome() const {
-    std::cout << "\n=== Доходы ===\n";
-    for (const auto& t : transactions) {
-        if (t.get_type() == Transaction::Type::INCOME) {
-            std::cout << t.get_summary() << "\n";
-        }
+    if (!hasValidData) {
+        std::cerr << "В файле нет валидных данных. Используется общий счет по умолчанию.\n";
     }
 }
 
-void FinanceCore::viewExpenses() const {
-    std::cout << "\n=== Расходы ===\n";
-    for (const auto& t : transactions) {
-        if (t.get_type() == Transaction::Type::EXPENSE) {
-            std::cout << t.get_summary() << "\n";
-        }
-    }
-}
 
-FinanceCore::FinanceCore() {
+FinanceCore::FinanceCore() : dataFile("transactions.dat") {
     accounts["Общий"] = Account("Общий");
     currentAccount = &accounts["Общий"];
+    ensureDefaultAccount();
     loadData();
 }
 
@@ -73,15 +109,16 @@ void FinanceCore::printMainMenu() const {
         << "\nВыберите действие: ";
 }
 
-void FinanceCore::showStatistics() const {
+void FinanceCore::runStatsMenu() {
     int choice;
     do {
         std::cout << "\n=== Статистика ==="
             << "\n1. Общий баланс"
             << "\n2. По категориям"
             << "\n3. По месяцам"
-            << "\n4. Назад"
-            << "\nВыберите действие: ";
+            << "\n4. По текущему счету"
+            << "\n5. Назад"
+            << "\nВыберите: ";
 
         std::cin >> choice;
 
@@ -89,67 +126,179 @@ void FinanceCore::showStatistics() const {
         case 1: showTotalBalance(); break;
         case 2: showByCategory(); break;
         case 3: showByMonth(); break;
-        case 4: return;
+        case 4: showCurrentAccountStats(); break;
+        case 5: return;
         default: std::cout << "Неверный выбор!\n";
         }
     } while (true);
 }
 
-void FinanceCore::showTotalBalance() const {
-    double balance = std::accumulate(transactions.begin(), transactions.end(), 0.0,
-        [](double sum, const Transaction& t) {
-            return sum + t.get_signed_amount();
-        });
+void FinanceCore::showCurrentAccountStats() const {
+    double income = 0;
+    double expenses = 0;
 
-    std::cout << "\n=== Общий баланс ===\n";
-    std::cout << "Текущий баланс: " << balance << " руб.\n";
+    for (const auto& t : currentAccount->get_transactions()) {
+        if (t.get_type() == Transaction::Type::INCOME) {
+            income += t.get_amount();
+        }
+        else {
+            expenses += t.get_amount();
+        }
+    }
+
+    std::cout << "\n=== Статистика (" << currentAccount->get_name() << ") ===\n"
+        << "Транзакций: " << currentAccount->get_transactions().size() << "\n"
+        << "Доходы: " << income << "\n"
+        << "Расходы: " << expenses << "\n"
+        << "Баланс: " << currentAccount->get_balance() << "\n";
+}
+
+void FinanceCore::showTotalBalance() const {
+    double totalIncome = 0;
+    double totalExpenses = 0;
+
+    for (const auto& [name, account] : accounts) {
+        for (const auto& t : account.get_transactions()) {
+            if (t.get_type() == Transaction::Type::INCOME) {
+                totalIncome += t.get_amount();
+            }
+            else {
+                totalExpenses += t.get_amount();
+            }
+        }
+    }
+
+    std::cout << "\n=== Общая статистика ===\n"
+        << "Доходы: " << totalIncome << " руб.\n"
+        << "Расходы: " << totalExpenses << " руб.\n"
+        << "Баланс: " << (totalIncome - totalExpenses) << " руб.\n";
 }
 
 void FinanceCore::showByCategory() const {
-    std::map<std::string, double> categories;
+    std::map<std::string, std::pair<double, double>> categories; // категория -> <доходы, расходы>
 
-    for (const auto& t : transactions) {
-        categories[t.get_category()] += t.get_signed_amount();
+    for (const auto& [name, account] : accounts) {
+        for (const auto& t : account.get_transactions()) {
+            if (t.get_type() == Transaction::Type::INCOME) {
+                categories[t.get_category()].first += t.get_amount();
+            }
+            else {
+                categories[t.get_category()].second += t.get_amount();
+            }
+        }
     }
 
     std::cout << "\n=== По категориям ===\n";
-    for (const auto& [category, amount] : categories) {
-        std::cout << category << ": " << amount << " руб.\n";
+    for (const auto& [category, amounts] : categories) {
+        std::cout << category << ": "
+            << "+" << amounts.first << " / -" << amounts.second
+            << " (итого: " << (amounts.first - amounts.second) << ")\n";
     }
 }
 
 void FinanceCore::showByMonth() const {
-    std::map<std::pair<int, int>, double> months; // <year, month>
+    std::map<std::pair<int, int>, std::pair<double, double>> months; // <год, месяц> -> <доходы, расходы>
 
-    for (const auto& t : transactions) {
-        auto key = std::make_pair(t.get_date().get_year(),
-            t.get_date().get_month());
-        months[key] += t.get_signed_amount();
+    for (const auto& [name, account] : accounts) {
+        for (const auto& t : account.get_transactions()) {
+            auto monthKey = std::make_pair(
+                t.get_date().get_year(),
+                t.get_date().get_month()
+            );
+
+            if (t.get_type() == Transaction::Type::INCOME) {
+                months[monthKey].first += t.get_amount();
+            }
+            else {
+                months[monthKey].second += t.get_amount();
+            }
+        }
     }
 
     std::cout << "\n=== По месяцам ===\n";
-    for (const auto& [month, amount] : months) {
-        std::cout << month.first << "-" << month.second << ": "
-            << amount << " руб.\n";
+    for (const auto& [month, amounts] : months) {
+        std::cout << month.first << "-" << std::setfill('0') << std::setw(2) << month.second << ": "
+            << "+" << amounts.first << " / -" << amounts.second
+            << " (баланс: " << (amounts.first - amounts.second) << ")\n";
     }
 }
 
 
 void FinanceCore::runMainMenu() {
     int choice;
-    do {
-        printMainMenu();
-        std::cin >> choice;
-        std::cin.ignore(); // Очистка буфера
+    bool exitRequested = false;
 
-        switch (choice) {
-        case 1: addTransaction(); break;
-        case 2: runTransactionMenu(); break;
-        case 3: runStatsMenu(); break;
-        case 4: saveData(); return;
-        default: std::cout << "Неверный выбор!\n";
+    while (!exitRequested) {
+        try {
+            // Очистка экрана (кросс-платформенный способ)
+#ifdef _WIN32
+            system("cls");
+#else
+            system("clear");
+#endif
+
+            std::cout << "╔══════════════════════════════╗\n";
+            std::cout << "║    ФИНАНСОВЫЙ МЕНЕДЖЕР      ║\n";
+            std::cout << "╠══════════════════════════════╣\n";
+            std::cout << "║ Текущий счёт: " << std::left << std::setw(15)
+                << currentAccount->get_name().substr(0, 15)
+                << " ║ Баланс: " << std::setw(8) << currentAccount->get_balance() << " ║\n";
+            std::cout << "╠══════════════════════════════╣\n";
+            std::cout << "║ 1. Добавить транзакцию       ║\n";
+            std::cout << "║ 2. Просмотреть историю       ║\n";
+            std::cout << "║ 3. Статистика                ║\n";
+            std::cout << "║ 4. Управление счетами        ║\n";
+            std::cout << "║ 5. Удалить транзакцию        ║\n";
+            std::cout << "║ 0. Выход                     ║\n";
+            std::cout << "╚══════════════════════════════╝\n";
+            std::cout << "➤ Выберите действие: ";
+
+            // Проверка ввода
+            if (!(std::cin >> choice)) {
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                throw std::runtime_error("Ошибка: введите число от 0 до 5");
+            }
+
+            // Обработка выбора
+            switch (choice) {
+            case 1:
+                addTransaction();
+                break;
+            case 2:
+                runTransactionMenu();
+                break;
+            case 3:
+                runStatsMenu();
+                break;
+            case 4:
+                manageAccounts();
+                break;
+            case 5:
+                removeTransaction();
+                break;
+            case 0:
+                saveData();
+                std::cout << "╔══════════════════════════════╗\n";
+                std::cout << "║ Данные сохранены. До свидания!║\n";
+                std::cout << "╚══════════════════════════════╝\n";
+                exitRequested = true;
+                break;
+            default:
+                std::cout << "⚠ Ошибка: неверный пункт меню!\n";
+                std::cout << "Нажмите Enter для продолжения...";
+                std::cin.ignore();
+                std::cin.get();
+            }
+
         }
-    } while (true);
+        catch (const std::exception& e) {
+            std::cerr << "\n⚠ Ошибка: " << e.what() << "\n";
+            std::cout << "Нажмите Enter для продолжения...";
+            std::cin.ignore();
+            std::cin.get();
+        }
+    }
 }
 
 void FinanceCore::addTransaction() {
@@ -267,6 +416,35 @@ void FinanceCore::addTransaction() {
     }
 }
 
+void FinanceCore::validateData() {
+    for (auto& [name, account] : accounts) {
+        double calculatedBalance = 0;
+        for (const auto& t : account.get_transactions()) {
+            calculatedBalance += t.get_signed_amount();
+        }
+
+        if (std::abs(account.get_balance() - calculatedBalance) > 0.01) {
+            std::cerr << "Внимание: несоответствие баланса для счета " << name
+                << "! Автоматическая коррекция...\n";
+            account.recalculateBalance();
+        }
+    }
+}
+
+bool FinanceCore::validateData() const {
+    if (accounts.empty()) return false;
+    for (const auto& [name, account] : accounts) {
+        double balance = 0;
+        for (const auto& t : account.get_transactions()) {
+            balance += t.get_signed_amount();
+        }
+        if (std::abs(balance - account.get_balance()) > 0.01) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void FinanceCore::removeTransaction() {
     if (currentAccount->get_transactions().empty()) {
         std::cout << "Нет транзакций для удаления.\n";
@@ -307,10 +485,67 @@ void FinanceCore::runTransactionMenu() {
 }
 
 void FinanceCore::viewAllTransactions() const {
-    std::cout << "\n=== Все транзакции ===\n";
-    for (const auto& t : transactions) {
-        std::cout << t.get_summary() << "\n";
+    if (currentAccount->get_transactions().empty()) {
+        std::cout << "Нет транзакций для отображения.\n";
+        return;
     }
+
+    std::cout << "\n=== Все транзакции (" << currentAccount->get_transactions().size() << ") ===\n";
+    std::cout << "┌──────┬──────────┬──────────┬────────────┬────────────┬──────────────┐\n";
+    std::cout << "│  ID  │   Дата   │   Тип    │   Сумма    │ Категория  │  Описание    │\n";
+    std::cout << "├──────┼──────────┼──────────┼────────────┼────────────┼──────────────┤\n";
+
+    for (const auto& t : currentAccount->get_transactions()) {
+        std::cout << "│ " << std::setw(4) << t.get_id() << " │ "
+            << t.get_date().to_string() << " │ "
+            << std::setw(8) << (t.get_type() == Transaction::Type::INCOME ? "Доход" : "Расход") << " │ "
+            << std::setw(10) << t.get_amount() << " │ "
+            << std::setw(10) << t.get_category().substr(0, 10) << " │ "
+            << std::setw(12) << t.get_description().substr(0, 12) << " │\n";
+    }
+    std::cout << "└──────┴──────────┴──────────┴────────────┴────────────┴──────────────┘\n";
+}
+
+
+void FinanceCore::viewIncome() const {
+    auto incomes = getFilteredTransactions(Transaction::Type::INCOME);
+    printTransactionsTable(incomes, "Доходы");
+}
+
+void FinanceCore::viewExpenses() const {
+    auto expenses = getFilteredTransactions(Transaction::Type::EXPENSE);
+    printTransactionsTable(expenses, "Расходы");
+}
+
+std::vector<Transaction> FinanceCore::getFilteredTransactions(Transaction::Type type) const {
+    std::vector<Transaction> result;
+    for (const auto& t : currentAccount->get_transactions()) {
+        if (t.get_type() == type) {
+            result.push_back(t);
+        }
+    }
+    return result;
+}
+
+void FinanceCore::printTransactionsTable(const std::vector<Transaction>& transactions, const std::string& title) const {
+    if (transactions.empty()) {
+        std::cout << "\nНет транзакций (" << title << ") для отображения.\n";
+        return;
+    }
+
+    std::cout << "\n=== " << title << " (" << transactions.size() << ") ===\n";
+    std::cout << "┌──────┬──────────┬────────────┬────────────┬──────────────┐\n";
+    std::cout << "│  ID  │   Дата   │   Сумма    │ Категория  │  Описание    │\n";
+    std::cout << "├──────┼──────────┼────────────┼────────────┼──────────────┤\n";
+
+    for (const auto& t : transactions) {
+        std::cout << "│ " << std::setw(4) << t.get_id() << " │ "
+            << t.get_date().to_string() << " │ "
+            << std::setw(10) << t.get_amount() << " │ "
+            << std::setw(10) << t.get_category().substr(0, 10) << " │ "
+            << std::setw(12) << t.get_description().substr(0, 12) << " │\n";
+    }
+    std::cout << "└──────┴──────────┴────────────┴────────────┴──────────────┘\n";
 }
 
 void FinanceCore::printTransactionMenu() const {
@@ -360,39 +595,6 @@ void FinanceCore::showTopExpenses() const {
     if (expenses.empty()) {
         std::cout << "Нет данных о расходах.\n";
     }
-}
-
-void FinanceCore::runStatsMenu() {
-    int choice;
-    do {
-        printStatsMenu();
-        std::cin >> choice;
-        std::cin.ignore();
-
-        switch (choice) {
-        case 1:
-            showTotalBalance();
-            break;
-        case 2:
-            showByCategory();
-            break;
-        case 3:
-            showByMonth();
-            break;
-        case 4:
-            showTopExpenses();
-            break;
-        case 5:
-            return;
-        default:
-            std::cout << "Неверный выбор! Попробуйте снова.\n";
-        }
-
-        if (choice >= 1 && choice <= 4) {
-            std::cout << "\nНажмите Enter для продолжения...";
-            std::cin.get();
-        }
-    } while (true);
 }
 
 void FinanceCore::manageAccounts() {
