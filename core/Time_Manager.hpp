@@ -64,9 +64,9 @@ public:
 
     //Форматированный вывод 
     std::string get_summary() const {
-        std::string typeSymbol = (type == Type::INCOME) ? "[+] " : "[-] ";
-        return date.to_string() + " " + typeSymbol + std::to_string(amount) +
-            " (" + category + ") " + description;
+        return date.to_string() + " " +
+            (type == Type::INCOME ? "[+] " : "[-] ") +
+            std::to_string(amount) + " (" + category + ") " + description;
     }
 
     //Перевод данных для вывода ... вывод
