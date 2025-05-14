@@ -31,11 +31,28 @@ public:
 	}
 
 	//Проверка корректности даты
-	bool is_valid() const
-	{
-		return (year >= 2000) &&
-			(month >= 1 && month <= 12) &&
-			(day >= 1 && day <= day_in_month());
+	bool is_valid() const {
+		if (year < 2000 || year > 2100) return false;
+		if (month < 1 || month > 12) return false;
+
+		const int days_in_month[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+		int max_days = days_in_month[month - 1];
+
+		// Обработка високосного года для февраля
+		if (month == 2 && is_leap_year()) {
+			max_days = 29;
+		}
+
+		return (day >= 1 && day <= max_days);
+	}
+
+	// Метод для форматированного вывода даты
+	std::string to_string() const {
+		std::ostringstream oss;
+		oss << std::setw(4) << std::setfill('0') << year << "-"
+			<< std::setw(2) << std::setfill('0') << month << "-"
+			<< std::setw(2) << std::setfill('0') << day;
+		return oss.str();
 	}
 
 	//Умолчательный конструктор 
@@ -99,16 +116,6 @@ public:
 			day = temp;
 			throw std::invalid_argument("Invalid day!");
 		}
-	}
-
-	//Форматированный вывод
-	std::string to_string() const
-	{
-		std::ostringstream ostrm;
-		ostrm << std::setw(4) << std::setfill('0') << year << "."
-			<< std::setw(2) << std::setfill('0') << month << "."
-			<< std::setw(2) << std::setfill('0') << day;
-		return ostrm.str();
 	}
 
 	//Перегружаем операторы сравнения
