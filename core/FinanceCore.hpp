@@ -8,6 +8,7 @@
 
 class FinanceCore {
 private:
+
     std::vector<Transaction> transactions;
     std::string dataFile = "C:/Users/Zeta/source/repos/Money_keeper/data/transactions.dat";
     std::map<std::string, Account> accounts;
@@ -22,29 +23,38 @@ public:
     FinanceCore();
 
     // Основные функции
+    void loadData();
+    void saveData();
+
     void renameAccount();
     void deleteAccount();
     void selectAccount();
     void createAccount();
     void manageAccounts();
+
     void removeTransaction();
-    void loadData();
-    void saveData();
     void addTransaction();
     void viewAllTransactions() const;
     void viewIncome() const;
     void viewExpenses() const;
+
     void showByCategory() const;
     void showTotalBalance() const;
     void showByMonth() const;
-    void showTopExpenses() const;
-    void validateData();
-    bool validateData() const;
     void showCurrentAccountStats() const;
+
+    bool validateData() const;
+
     Account& getCurrentAccount();
     void ensureDefaultAccount();
     std::vector<Transaction> getFilteredTransactions(Transaction::Type type) const;
     void printTransactionsTable(const std::vector<Transaction>& transactions, const std::string& title) const;
+
+    int getMenuChoice() const;
+
+    void clearConsole() const;
+
+    void clearInputBuffer() const;
     
     // Интерфейс
     void runMainMenu();
