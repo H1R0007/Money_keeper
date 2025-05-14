@@ -11,6 +11,7 @@ private:
 
     std::vector<Transaction> transactions;
     std::map<std::string, Account> accounts;
+    std::string dataFile = "C:/Users/Zeta/source/repos/Money_keeper/data/transactions.dat";
     Account* currentAccount;
 
     // Вспомогательные методы
