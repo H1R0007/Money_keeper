@@ -10,7 +10,6 @@ class FinanceCore {
 private:
 
     std::vector<Transaction> transactions;
-    std::string dataFile = "C:/Users/Zeta/source/repos/Money_keeper/data/transactions.dat";
     std::map<std::string, Account> accounts;
     Account* currentAccount;
 
@@ -55,7 +54,7 @@ public:
     void clearConsole() const;
 
     void clearInputBuffer() const;
-    
+
     // Интерфейс
     void runMainMenu();
     void runTransactionMenu();
