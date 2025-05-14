@@ -6,11 +6,24 @@ set(CMAKE_CXX_STANDARD 17)
 add_executable(FinanceManager
     main.cpp
     core/FinanceCore.cpp
+    core/File_Manager.cpp
+    core/Transactions.cpp
+    core/Statistics.cpp
+    core/Menu_Handlers.cpp
+    core/Account.cpp
     core/Date.hpp
-    core/Time_manager.hpp
+    core/Time_Manager.hpp
     core/Account.hpp
+    core/FinanceCore.hpp
 )
-target_include_directories(FinanceManager PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
+# Äëÿ Windows (MinGW)
+if (MINGW)
+    set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
+endif()
+
+if(WIN32)
+    add_compile_definitions(NOMINMAX)
+endif()
+
+target_include_directories(FinanceManager PRIVATE core)
