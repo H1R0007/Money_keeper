@@ -1,7 +1,31 @@
-﻿#include "FinanceCore.hpp"
+/**
+ * @file Menu_Handlers.cpp
+ * @brief Реализация пользовательского интерфейса FinanceCore
+ */
+
+
+#include "FinanceCore.hpp"
 #ifdef _WIN32
 #include <windows.h> // Для очистки консоли
 #endif
+
+ /**
+   * @brief Главный цикл меню приложения
+   * @details Обрабатывает:
+   * - Добавление/удаление транзакций
+   * - Просмотр статистики
+   * - Управление счетами
+   * - Автоматическое сохранение при выходе
+   *
+   * @par Логика работы:
+   * @code
+   * while (не запрошен выход) {
+   *   1. Отображает главное меню
+   *   2. Получает выбор пользователя
+   *   3. Выполняет соответствующее действие
+   * }
+   * @endcode
+   */
 
 //Основные меню
 void FinanceCore::runMainMenu() {
@@ -46,6 +70,14 @@ void FinanceCore::runMainMenu() {
     }
 }
 
+/**
+ * @brief Меню работы с транзакциями
+ * @details Позволяет:
+ * - Просматривать все транзакции
+ * - Фильтровать по доходам/расходам
+ *
+ * @note Использует getMenuChoice() для обработки ввода
+ */
 void FinanceCore::runTransactionMenu() {
     int choice;
     do {
@@ -68,6 +100,14 @@ void FinanceCore::runTransactionMenu() {
     } while (true);
 }
 
+/**
+ * @brief Меню финансовой статистики
+ * @details Доступные отчеты:
+ * - Общий баланс
+ * - Анализ по категориям
+ * - Помесячная статистика
+ * - Статистика по текущему счету
+ */
 void FinanceCore::runStatsMenu() {
     int choice;
     do {
@@ -93,6 +133,25 @@ void FinanceCore::runStatsMenu() {
 }
 
 //Управление счетами
+
+/**
+ * @brief Создает новый счет
+ * @throws std::invalid_argument Если имя счета уже существует
+ * @post Добавляет новый счет в accounts
+ *
+ * @par Пример:
+ * @code
+ * Введите название счета: Сбережения
+ * Счет создан!
+ * @endcode
+ */
+
+ /**
+  * @details Для переименования:
+  * 1. Создается новый счет с перенесенными данными
+  * 2. Старый счет удаляется (кроме "Общего")
+  * 3. Обновляется currentAccount
+  */
 void FinanceCore::createAccount() {
     std::string name;
     std::cout << "Введите название счета: ";
@@ -108,6 +167,13 @@ void FinanceCore::createAccount() {
     std::cout << "Счет создан!\n";
 }
 
+/**
+ * @brief Выбирает активный счет
+ * @details Отображает список всех счетов с балансами
+ * @post Устанавливает currentAccount на выбранный
+ *
+ * @warning При отмене currentAccount не изменяется
+ */
 void FinanceCore::selectAccount() {
     if (accounts.empty()) {
         std::cout << "Нет доступных счетов.\n";
@@ -142,6 +208,13 @@ void FinanceCore::selectAccount() {
     std::cout << "Выбран счет: " << it->first << "\n";
 }
 
+/**
+ * @brief Удаляет указанный счет
+ * @pre В системе должен остаться хотя бы один счет
+ * @post Если удалялся текущий счет, переключается на "Общий"
+ *
+ * @throws std::logic_error При попытке удалить последний счет
+ */
 void FinanceCore::deleteAccount() {
     if (accounts.size() <= 1) { // Нельзя удалить последний счет
         std::cout << "Должен остаться хотя бы один счет!\n";
@@ -181,6 +254,14 @@ void FinanceCore::deleteAccount() {
     std::cout << "Счет удален.\n";
 }
 
+
+/**
+ * @brief Переименовывает текущий счет
+ * @param[in] newName Новое имя счета
+ * @throws std::invalid_argument Если имя уже занято
+ *
+ * @note Для "Общего" счета создает копию, а не переименовывает
+ */
 void FinanceCore::renameAccount() {
     std::cout << "\n=== Переименование счета ===\n";
     std::cout << "Текущее имя: " << currentAccount->get_name() << "\n";
@@ -213,6 +294,17 @@ void FinanceCore::renameAccount() {
     std::cout << "Счет переименован.\n";
 }
 
+/**
+ * @brief Управление счетами (главное меню)
+ * @details Объединяет:
+ * - createAccount()
+ * - deleteAccount()
+ * - selectAccount()
+ *
+ * @see createAccount()
+ * @see deleteAccount()
+ * @see selectAccount()
+ */
 void FinanceCore::manageAccounts() {
     int choice;
     do {
@@ -236,6 +328,16 @@ void FinanceCore::manageAccounts() {
 }
 
 //Отображение меню
+
+/**
+ * @brief Отображает главное меню
+ * @details Формат вывода:
+ * - Заголовок приложения
+ * - Инфо о текущем счете
+ * - Доступные действия
+ *
+ * @note Кроссплатформенная реализация очистки консоли
+ */
 void FinanceCore::printMainMenu() const {
 
     // Очищаем консоль правильно
@@ -273,6 +375,10 @@ void FinanceCore::printMainMenu() const {
     std::cout << "> Выберите действие: ";
 }
 
+/**
+ * @brief Отображает меню транзакций
+ * @deprecated Будет заменено на runTransactionMenu()
+ */
 void FinanceCore::printTransactionMenu() const {
     std::cout << "\n--- История транзакций ---\n"
         << "1. Все транзакции\n"
@@ -285,6 +391,10 @@ void FinanceCore::printTransactionMenu() const {
 
 }
 
+/**
+ * @brief Отображает меню статистики
+ * @deprecated Будет заменено на runStatsMenu()
+ */
 void FinanceCore::printStatsMenu() const {
     std::cout << "\n--- Меню статистики ---\n"
         << "1. Общий баланс\n"

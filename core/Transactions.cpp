@@ -1,5 +1,42 @@
-﻿#include "FinanceCore.hpp"
+
+/**
+ * @file Transactions.cpp
+ * @brief Реализация методов работы с транзакциями
+ */
+
+#include "FinanceCore.hpp"
 #include <Windows.h>
+
+ /**
+  * @brief Добавляет новую транзакцию через интерактивный диалог
+  * @details Пошаговый процесс:
+  * 1. Выбор типа операции (доход/расход)
+  * 2. Ввод суммы
+  * 3. Указание категории
+  * 4. Установка даты
+  * 5. Добавление описания
+  *
+  * @throws std::invalid_argument При неверных входных данных
+  * @post При успешном добавлении транзакция сохраняется в currentAccount
+  *
+  * @note Поддерживает:
+  * - Отмену на любом этапе (ввод 0)
+  * - Автоматическую установку текущей даты
+  * - Валидацию всех полей
+  *
+  * @par Пример диалога:
+  * @code{.unparsed}
+  * === Новая транзакция ===
+  * 1. Доход
+  * 2. Расход
+  * Выберите тип: 1
+  * Введите сумму: 1000
+  * Введите категорию: Зарплата
+  * Дата (гггг-мм-дд): 2023-05-20
+  * Описание: Аванс
+  * Транзакция успешно добавлена!
+  * @endcode
+  */
 
 // Добавление/удаление
 void FinanceCore::addTransaction() {
@@ -136,6 +173,18 @@ void FinanceCore::addTransaction() {
     }
 }
 
+/**
+ * @brief Удаляет транзакцию по ID
+ * @details Процесс:
+ * 1. Показывает список всех транзакций
+ * 2. Запрашивает ID для удаления
+ * 3. Удаляет транзакцию из currentAccount
+ *
+ * @pre В currentAccount должны быть транзакции
+ * @throws std::out_of_range Если транзакция с указанным ID не найдена
+ *
+ * @note Поддерживает отмену операции (ввод 0)
+ */
 void FinanceCore::removeTransaction() {
 
     SetConsoleOutputCP(CP_UTF8);
@@ -156,6 +205,22 @@ void FinanceCore::removeTransaction() {
     currentAccount->removeTransaction(id);
     std::cout << "Транзакция удалена.\n";
 }
+
+
+/**
+ * @brief Выводит таблицу транзакций
+ * @param transactions Список транзакций для отображения
+ * @param title Заголовок таблицы
+ *
+ * @details Формат таблицы:
+ * - ID (4 символа)
+ * - Дата (YYYY-MM-DD)
+ * - Сумма (10 символов)
+ * - Категория (10 символов)
+ * - Описание (12 символов)
+ *
+ * @note Автоматически обрезает длинные строки категории/описания
+ */
 
 //Просмотр
 void FinanceCore::printTransactionsTable(const std::vector<Transaction>& transactions, const std::string& title) const {
@@ -179,15 +244,33 @@ void FinanceCore::printTransactionsTable(const std::vector<Transaction>& transac
     std::cout << "+------+----------+------------+------------+--------------+\n";
 }
 
+/**
+ * @brief Показывает только доходные транзакции
+ * @see getFilteredTransactions()
+ * @see printTransactionsTable()
+ */
 void FinanceCore::viewIncome() const {
     auto incomes = getFilteredTransactions(Transaction::Type::INCOME);
     printTransactionsTable(incomes, "Доходы");
 }
 
+/**
+ * @brief Показывает только расходные транзакции
+ * @see getFilteredTransactions()
+ * @see printTransactionsTable()
+ */
 void FinanceCore::viewExpenses() const {
     auto expenses = getFilteredTransactions(Transaction::Type::EXPENSE);
     printTransactionsTable(expenses, "Расходы");
 }
+
+/**
+ * @brief Фильтрует транзакции по типу
+ * @param type Тип транзакции (INCOME/EXPENSE)
+ * @return Вектор транзакций указанного типа
+ *
+ * @note Всегда возвращает копию транзакций (не ссылки)
+ */
 
 //Вспомогательные
 std::vector<Transaction> FinanceCore::getFilteredTransactions(Transaction::Type type) const {
@@ -200,6 +283,15 @@ std::vector<Transaction> FinanceCore::getFilteredTransactions(Transaction::Type 
     return result;
 }
 
+/**
+ * @brief Показывает все транзакции текущего счета
+ * @details Формат вывода:
+ * - ID | Дата | Тип | Сумма | Категория | Описание
+ *
+ * @post Очищает консоль перед выводом (clearConsole())
+ *
+ * @note Использует сокращение длинных текстовых полей (добавляет "...")
+ */
 void FinanceCore::viewAllTransactions() const {
     clearConsole();
 

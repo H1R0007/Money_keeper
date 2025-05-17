@@ -1,14 +1,49 @@
+/**
+ * @file Time_Manager.hpp
+ * @brief Класс для работы с финансовыми транзакциями
+ * @author Сонин Михаил/Эксузян Давид
+ * @version 1.0
+ * @date 2025-05-16
+ */
+
 #pragma once
 #include <string>
 #include <iostream>
 #include <stdexcept>
 #include "Date.hpp"
 
+ /**
+  * @class Transaction
+  * @brief Класс финансовой транзакции (доход/расход)
+  *
+  * @details Обеспечивает:
+  * - Хранение информации о транзакции
+  * - Валидацию данных
+  * - Сериализацию/десериализацию
+  * - Форматированный вывод
+  *
+  * @note Автоматически генерирует уникальные ID для транзакций
+  */
 class Transaction {
 
 public:
-    enum class Type { INCOME, EXPENSE };
+    /**
+     * @enum Type
+     * @brief Тип транзакции
+     */
+    enum class Type { 
+        INCOME, ///< Доходная операция
+        EXPENSE ///< Расходная операция
+    };
 
+    /**
+    * @brief Конструктор по умолчанию
+    * @details Инициализирует:
+    * - ID (автоинкремент)
+    * - Текущую дату
+    * - Пустую категорию
+    * - Тип EXPENSE
+    */
     Transaction()
         : id(next_id++),
         amount(0.0),
@@ -19,57 +54,89 @@ public:
     {
     }
 
-    //Умолчательные конструкторы
+    /**
+    * @brief Основной конструктор
+    * @param amt Сумма (должна быть > 0)
+    * @param cat Категория (не пустая)
+    * @param t Тип транзакции
+    * @param d Дата (должна быть валидной)
+    * @param desc Описание (опционально)
+    * @throws std::invalid_argument При невалидных данных
+    */
     Transaction(double amt, const std::string& cat, Type t, const Date& d, const std::string& desc = "")
         : id(next_id++), amount(amt), category(cat), type(t), date(d), description(desc) {
         validation();
     }
 
     //Геттеры
-    int get_id() const { return id; }
-    double get_amount() const { return amount; }
-    std::string get_category() const { return category; }
-    Type get_type() const { return type; }
-    Date get_date() const { return date; }
-    std::string get_description() const { return description; }
+    int get_id() const { return id; }                   ///< @return Уникальный ID транзакции
+    double get_amount() const { return amount; }        ///< @return Сумма транзакции
+    std::string get_category() const { return category; } ///< @return Категория
+    Type get_type() const { return type; }             ///< @return Тип (INCOME/EXPENSE)
+    Date get_date() const { return date; }             ///< @return Дата транзакции
+    std::string get_description() const { return description; } ///< @return Описание
 
-    //Корректирующие сеттеры
+    /**
+    * @brief Устанавливает сумму транзакции
+    * @param amt Новая сумма (> 0)
+    * @throws std::invalid_argument Если сумма <= 0
+    */
     void set_amount(double amt) {
         if (amt <= 0) throw std::invalid_argument("Amount must be positive");
         amount = amt;
     }
 
+    /**
+     * @brief Устанавливает категорию
+     * @param cat Новая категория (не пустая)
+     * @throws std::invalid_argument Если категория пуста
+     */
     void set_category(const std::string& cat) {
         if (cat.empty()) throw std::invalid_argument("Category cannot be empty");
         category = cat;
     }
 
+    /**
+     * @brief Устанавливает дату
+     * @param d Новая дата (должна быть валидной)
+     * @throws std::invalid_argument Если дата невалидна
+     */
     void set_date(const Date& d) {
         if (!d.is_valid()) throw std::invalid_argument("Invalid date");
         date = d;
     }
 
 
-    void set_type(Type t) { type = t; }
+    void set_type(Type t) { type = t; }                ///< Устанавливает тип транзакции
+    void set_description(const std::string& desc) { description = desc; } ///< Устанавливает описание
+    void set_id(int new_id) { id = new_id; }           ///< Устанавливает ID (для загрузки из файла)
 
-    void set_description(const std::string& desc) { description = desc; }
-
-    void set_id(int new_id) { id = new_id; }
-
-
-    //Метод для получения суммы с учетом типа операции
+    /**
+     * @brief Возвращает сумму с учетом типа
+     * @return Для INCOME - положительная сумма, для EXPENSE - отрицательная
+     */
     double get_signed_amount() const {
         return (type == Type::INCOME) ? amount : -amount;
     }
 
-    //Форматированный вывод 
+    /**
+     * @brief Форматированное строковое представление
+     * @return Строка вида "YYYY-MM-DD [+/-] сумма (категория) описание"
+     */
     std::string get_summary() const {
         return date.to_string() + " " +
             (type == Type::INCOME ? "[+] " : "[-] ") +
             std::to_string(amount) + " (" + category + ") " + description;
     }
 
-    //Перевод данных для вывода ... вывод
+    /**
+     * @brief Оператор вывода в поток
+     * @param os Выходной поток
+     * @param t Транзакция для вывода
+     * @return Поток os
+     *
+     * @note Формат: "id,amount,type,category,yyyy mm dd,description"
+     */
     friend std::ostream& operator<<(std::ostream& os, const Transaction& t) {
         os << t.id << ","
             << t.amount << ","
@@ -80,7 +147,14 @@ public:
         return os;
     }
 
-    //Перегрузка оператора ввода
+    /**
+    * @brief Оператор ввода из потока
+    * @param is Входной поток
+    * @param t Транзакция для заполнения
+    * @return Поток is
+    * @throws std::runtime_error При ошибках формата
+    * @throws std::ios_base::failure При невалидных данных
+    */
     friend std::istream& operator>>(std::istream& is, Transaction& t) {
         std::string line;
         if (!std::getline(is, line)) return is;
@@ -117,29 +191,25 @@ public:
     }
 
 private:
-    static inline int next_id = 1;
-    int id;
-    double amount;
-    std::string category;
-    Type type;
-    Date date;
-    std::string description;
+    static inline int next_id = 1; ///< Счетчик для автоинкремента ID
+    int id;             ///< Уникальный идентификатор
+    double amount;      ///< Сумма (> 0)
+    std::string category; ///< Категория (не пустая)
+    Type type;          ///< Тип (доход/расход)
+    Date date;          ///< Дата транзакции
+    std::string description; ///< Описание (опционально)
 
-    //Корректировка данных
-    void validation() const
-    {
-        if (amount <= 0)
-        {
-            throw std::invalid_argument("Amount can`t be negative");
-        }
-        if (category.empty())
-        {
-            throw std::invalid_argument("You should choose category");
-        }
-        if (!date.is_valid())
-        {
-            throw std::invalid_argument("Invalid format");
-        }
+    /**
+     * @brief Валидация данных транзакции
+     * @throws std::invalid_argument Если:
+     * - amount <= 0
+     * - category пуста
+     * - date невалидна
+     */
+    void validation() const {
+        if (amount <= 0) throw std::invalid_argument("Amount can't be negative");
+        if (category.empty()) throw std::invalid_argument("You should choose category");
+        if (!date.is_valid()) throw std::invalid_argument("Invalid date format");
     }
 };
 

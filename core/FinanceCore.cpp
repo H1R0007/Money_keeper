@@ -1,3 +1,8 @@
+/**
+ * @file FinanceCore.cpp
+ * @brief Реализация методов FinanceCore
+ */
+
 #pragma once
 #include "FinanceCore.hpp"
 #include <thread>
@@ -10,6 +15,12 @@
 #include <windows.h> // Для очистки консоли
 #endif
 
+ /**
+  * @brief Получает текущий активный счет
+  * @details Если текущий счет не установлен, использует "Общий"
+  * @return Ссылка на текущий счет
+  * @warning Не возвращает nullptr (гарантирует валидный счет)
+  */
 Account& FinanceCore::getCurrentAccount() {
     if (currentAccount == nullptr) {
         currentAccount = &accounts["Общий"];
@@ -17,6 +28,11 @@ Account& FinanceCore::getCurrentAccount() {
     return *currentAccount;
 }
 
+/**
+ * @brief Гарантирует наличие счета по умолчанию
+ * @post Если accounts пуст, создается счет "Общий"
+ * @post currentAccount никогда не будет nullptr
+ */
 void FinanceCore::ensureDefaultAccount() {
     if (accounts.empty()) {
         accounts["Общий"] = Account("Общий");
@@ -26,6 +42,15 @@ void FinanceCore::ensureDefaultAccount() {
     }
 }
 
+/**
+ * @brief Конструктор инициализирует систему
+ * @details Определяет путь к файлу данных в порядке приоритета:
+ * 1. Путь к исполняемому файлу (Linux)
+ * 2. Текущая директория
+ * 3. Аварийный fallback
+ *
+ * @note Автоматически вызывает loadData()
+ */
 FinanceCore::FinanceCore() {
     accounts["Общий"] = Account("Общий");
     currentAccount = &accounts["Общий"];
@@ -55,6 +80,13 @@ FinanceCore::FinanceCore() {
     loadData();
 }
 
+/**
+ * @brief Валидирует финансовые данные
+ * @details Проверяет:
+ * - Наличие хотя бы одного счета
+ * - Корректность балансов (сумма транзакций == балансу)
+ * @return true если все данные корректны
+ */
 bool FinanceCore::validateData() const {
     if (accounts.empty()) return false;
     for (const auto& [name, account] : accounts) {
@@ -69,6 +101,11 @@ bool FinanceCore::validateData() const {
     return true;
 }
 
+/**
+ * @brief Получает выбор пользователя из меню
+ * @return Числовой выбор (1-N)
+ * @note Цикл продолжается до получения корректного ввода
+ */
 int FinanceCore::getMenuChoice() const {
     int choice;
     while (true) {
@@ -84,6 +121,12 @@ int FinanceCore::getMenuChoice() const {
     }
 }
 
+/**
+ * @brief Очищает консоль (кроссплатформенно)
+ * @details Использует:
+ * - "cls" на Windows
+ * - "clear" на Unix-системах
+ */
 void FinanceCore::clearConsole() const {
 #ifdef _WIN32
     system("cls");
@@ -92,6 +135,10 @@ void FinanceCore::clearConsole() const {
 #endif
 }
 
+/**
+ * @brief Очищает буфер ввода
+ * @details Используется после cin >> для предотвращения проблем с вводом
+ */
 void FinanceCore::clearInputBuffer() const {
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
