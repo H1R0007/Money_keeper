@@ -25,3 +25,5 @@ CMakeFiles/
 Makefile
 
 # Файлы данных
+docs/html/
+docs/latex/
