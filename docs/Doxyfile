@@ -1,0 +1,14 @@
+OUTPUT_DIRECTORY       = "C:\Users\Zeta\source\repos\Money_keeper\docs"
+INPUT                  = "C:\Users\Zeta\source\repos\Money_keeper\core"
+IMAGE_PATH             = "C:\Users\Zeta\source\repos\Money_keeper\docs\images"
+
+RECURSIVE = YES
+FILE_PATTERNS = *.h *.hpp *.cpp
+INPUT_ENCODING = UTF-8
+
+INPUT += docs/mainpage.h
+USE_MDFILE_AS_MAINPAGE = docs/mainpage.h
+
+HAVE_DOT        = YES
+DOT_PATH = C:\Users\Zeta\source\repos\Money_keeper\Graphviz\bin
+DOT_IMAGE_FORMAT = svg
