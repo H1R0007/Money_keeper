@@ -3,6 +3,44 @@ project(FinanceManager)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# Находим doxygen.exe
+find_program(DOXYGEN_EXE 
+    NAMES doxygen.exe doxygen
+    PATHS "${CMAKE_SOURCE_DIR}/src/doxygen/bin"
+    NO_DEFAULT_PATH
+)
+
+if(DOXYGEN_EXE)
+    message(STATUS "Found Doxygen: ${DOXYGEN_EXE}")
+    
+    # Указываем правильный путь к Doxyfile
+    set(DOXYFILE_PATH "${CMAKE_SOURCE_DIR}/docs/Doxyfile")
+    
+    # Проверяем существование Doxyfile
+    if(EXISTS "${DOXYFILE_PATH}")
+        message(STATUS "Found Doxyfile: ${DOXYFILE_PATH}")
+        
+        add_custom_target(docs
+            COMMAND "${DOXYGEN_EXE}" "${DOXYFILE_PATH}"
+            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+            COMMENT "Generating documentation using ${DOXYGEN_EXE}"
+            VERBATIM
+        )
+        
+        # Создаем удобную команду для генерации
+        add_custom_command(
+            TARGET docs
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E echo "Documentation generated in ${CMAKE_SOURCE_DIR}/docs/html"
+        )
+    else()
+        message(WARNING "Doxyfile not found at ${DOXYFILE_PATH}")
+    endif()
+else()
+    message(WARNING "Doxygen not found in ${CMAKE_SOURCE_DIR}/src/doxygen/bin")
+endif()
+
+
 add_executable(FinanceManager
     main.cpp
     core/FinanceCore.cpp
@@ -15,7 +53,7 @@ add_executable(FinanceManager
     core/Time_Manager.hpp
     core/Account.hpp
     core/FinanceCore.hpp
-)
+ "docs/mainpage.h")
 
 # Для Windows (MinGW)
 if (MINGW)
@@ -27,3 +65,4 @@ if(WIN32)
 endif()
 
 target_include_directories(FinanceManager PRIVATE core)
+
