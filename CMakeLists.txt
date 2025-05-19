@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(FinanceManager)
 
+set(CMAKE_TOOLCHAIN_FILE "C:/Users/Zeta/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 set(CMAKE_CXX_STANDARD 17)
 
 # Находим doxygen.exe
@@ -53,6 +54,12 @@ add_executable(FinanceManager
     core/Time_Manager.hpp
     core/Account.hpp
     core/FinanceCore.hpp
+    core/currency/CurrencyConverter.cpp
+    core/currency/CurrencyFetcher.cpp
+    core/currency/CurrencyConverter.hpp
+    core/currency/CurrencyFetcher.hpp
+    core/currency/curl/CurlHttpClient.cpp
+    core/currency/curl/CurlHttpClient.hpp
  "docs/mainpage.h")
 
 # Для Windows (MinGW)
@@ -66,3 +73,7 @@ endif()
 
 target_include_directories(FinanceManager PRIVATE core)
 
+find_package(CURL REQUIRED)
+target_link_libraries(FinanceManager PRIVATE
+    CURL::libcurl
+)
