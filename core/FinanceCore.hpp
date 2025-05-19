@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file FinanceCore.hpp
  * @brief Основной класс системы управления финансами
  * @author Сонин Михаил/Эксузян Давид
@@ -20,6 +20,7 @@
 #include <map>
 #include <algorithm>
 #include "Account.hpp"
+#include "currency/CurrencyConverter.hpp"
 
  /**
   * @class FinanceCore
@@ -29,17 +30,31 @@
   */
 class FinanceCore {
 private:
-    std::vector<Transaction> transactions;       ///< Временное хранилище транзакций
-    std::string dataFile;                       ///< Путь к файлу данных
-    std::map<std::string, Account> accounts;    ///< Коллекция счетов (имя -> аккаунт)
-    Account* currentAccount;                    ///< Текущий активный счет
+
+    std::string base_currency_ = "RUB";
+    std::string dataFile;
+    std::map<std::string, Account> accounts;
+    Account* currentAccount;
+    CurrencyConverter currency_converter_;
+    mutable std::mutex accounts_mutex_; 
+
 
     // Вспомогательные методы
     void printMainMenu() const;         ///< Выводит главное меню
-    void printTransactionMenu() const;  ///< Выводит меню транзакций
-    void printStatsMenu() const;        ///< Выводит меню статистики
 
 public:
+
+    void showCurrencyMenu();
+    void showBalanceByCurrency() const;
+
+    void setBaseCurrency(const std::string& currency);
+    std::string getBaseCurrency() const;
+
+    FinanceCore(const FinanceCore&) = delete;
+    FinanceCore& operator=(const FinanceCore&) = delete;
+
+    FinanceCore(FinanceCore&&) = default;
+    FinanceCore& operator=(FinanceCore&&) = default;
     /**
      * @brief Конструктор инициализирует систему
      * @details Автоматически:
@@ -115,4 +130,8 @@ public:
     void runMainMenu();        ///< Запускает главное меню
     void runTransactionMenu(); ///< Запускает меню транзакций
     void runStatsMenu();       ///< Запускает меню статистики
+
+    void update_currency_rates(std::function<void(bool success)> callback);
+    double convert_currency(double amount, const std::string& from,
+        const std::string& to = "RUB") const;
 };

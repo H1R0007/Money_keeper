@@ -1,16 +1,18 @@
-/**
+﻿/**
  * @file FinanceCore.cpp
  * @brief Реализация методов FinanceCore
  */
 
 #pragma once
 #include "FinanceCore.hpp"
+#include "currency/CurrencyFetcher.hpp"
 #include <thread>
 #include <iostream>
 #include <fstream>
 #include <iomanip>
 #include <filesystem>
 #include <numeric>
+#include <future>
 #ifdef _WIN32
 #include <windows.h> // Для очистки консоли
 #endif
@@ -22,8 +24,9 @@
   * @warning Не возвращает nullptr (гарантирует валидный счет)
   */
 Account& FinanceCore::getCurrentAccount() {
-    if (currentAccount == nullptr) {
-        currentAccount = &accounts["Общий"];
+   // std::lock_guard<std::mutex> lock(accounts_mutex_);
+    if (!currentAccount) {
+        currentAccount = &accounts.at("Общий");
     }
     return *currentAccount;
 }
@@ -34,11 +37,12 @@ Account& FinanceCore::getCurrentAccount() {
  * @post currentAccount никогда не будет nullptr
  */
 void FinanceCore::ensureDefaultAccount() {
+   // std::lock_guard<std::mutex> lock(accounts_mutex_);
     if (accounts.empty()) {
-        accounts["Общий"] = Account("Общий");
+        accounts.try_emplace("Общий", "Общий");
     }
-    if (currentAccount == nullptr) {
-        currentAccount = &accounts["Общий"];
+    if (!currentAccount) {
+        currentAccount = &accounts.at("Общий");
     }
 }
 
@@ -52,8 +56,11 @@ void FinanceCore::ensureDefaultAccount() {
  * @note Автоматически вызывает loadData()
  */
 FinanceCore::FinanceCore() {
-    accounts["Общий"] = Account("Общий");
-    currentAccount = &accounts["Общий"];
+    std::cout << "[DEBUG] Путь к файлу данных: "
+        << std::filesystem::absolute(dataFile) << "\n";
+    // std::lock_guard<std::mutex> lock(accounts_mutex_);
+    accounts.try_emplace("Общий", "Общий");
+    currentAccount = &accounts.at("Общий");
 
     std::filesystem::path dataPath;
 
@@ -76,9 +83,37 @@ FinanceCore::FinanceCore() {
 
     std::cout << "Файл данных будет сохранен в: " << dataFile << std::endl;
 
+    std::filesystem::create_directories("CurrencyDat");
+
+    try {
+        std::promise<bool> promise;
+        auto future = promise.get_future();
+        update_currency_rates([&promise](bool success) {
+            promise.set_value(success);
+            });
+        future.wait();
+
+        if (!future.get()) {
+            std::cout << "Предупреждение: не удалось обновить курсы валют\n";
+        }
+    }
+    catch (...) {
+        std::cerr << "Ошибка при обновлении курсов валют\n";
+    }
+
+    // Отладочный вывод загруженных данных
+    std::cout << "[DEBUG] Загружено аккаунтов: " << accounts.size() << "\n";
+    for (const auto& [name, account] : accounts) {
+        std::cout << "[DEBUG] Аккаунт: " << name
+            << ", транзакций: " << account.get_transactions().size() << "\n";
+    }
+
     ensureDefaultAccount();
+
     loadData();
+
 }
+
 
 /**
  * @brief Валидирует финансовые данные
@@ -88,13 +123,17 @@ FinanceCore::FinanceCore() {
  * @return true если все данные корректны
  */
 bool FinanceCore::validateData() const {
+  //  std::lock_guard<std::mutex> lock(accounts_mutex_);
+
     if (accounts.empty()) return false;
+
     for (const auto& [name, account] : accounts) {
-        double balance = 0;
+        double calculated = 0;
         for (const auto& t : account.get_transactions()) {
-            balance += t.get_signed_amount();
+            calculated += t.get_amount_in_rub(currency_converter_);
         }
-        if (std::abs(balance - account.get_balance()) > 0.01) {
+
+        if (std::abs(calculated - account.get_balance()) > 0.01) {
             return false;
         }
     }
@@ -141,5 +180,52 @@ void FinanceCore::clearConsole() const {
  */
 void FinanceCore::clearInputBuffer() const {
     std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    if (std::cin.rdbuf()->in_avail() > 0) {
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+}
+
+void FinanceCore::update_currency_rates(std::function<void(bool)> callback) {
+    CurrencyFetcher fetcher;
+    fetcher.fetch_rates([this, callback](const auto& new_rates) {
+        bool success = false;
+
+        // 1. Обновляем курсы через публичный метод
+        if (!new_rates.empty()) {
+            currency_converter_.set_rates(new_rates); 
+            currency_converter_.save_rates_to_file("CurrencyDat/currency_rates.json");
+            success = true;
+        }
+        else {
+            success = currency_converter_.load_rates_from_file("CurrencyDat/currency_rates.json");
+        }
+
+        // 2. Пересчет балансов
+        if (success) {
+            std::lock_guard<std::mutex> acc_lock(accounts_mutex_);
+            for (auto& [name, account] : accounts) {
+                account.recalculateBalance(currency_converter_);
+            }
+        }
+
+        callback(success);
+        });
+}
+
+double FinanceCore::convert_currency(double amount, const std::string& from,
+    const std::string& to) const {
+    return currency_converter_.convert(amount, from, to);
+}
+
+void FinanceCore::setBaseCurrency(const std::string& currency) {
+    if (currency_converter_.is_currency_supported(currency)) {
+        base_currency_ = currency;
+    }
+    else {
+        throw std::invalid_argument("Валюта не поддерживается");
+    }
+}
+
+std::string FinanceCore::getBaseCurrency() const {
+    return base_currency_;
 }

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file Menu_Handlers.cpp
  * @brief Реализация пользовательского интерфейса FinanceCore
  */
@@ -53,6 +53,18 @@ void FinanceCore::runMainMenu() {
             break;
         case 5:
             removeTransaction();
+            break;
+        case 6: {
+            update_currency_rates([](bool success) {
+                std::cout << (success ? "Курсы обновлены!\n" : "Ошибка обновления!\n");
+                });
+            break;
+        }
+        case 7:
+            showCurrencyMenu();
+            break;
+        case 8:
+            showBalanceByCurrency();
             break;
         case 0:
             saveData();
@@ -158,12 +170,16 @@ void FinanceCore::createAccount() {
     std::cin.ignore();
     std::getline(std::cin, name);
 
+    //std::lock_guard<std::mutex> lock(accounts_mutex_); // Добавляем блокировку
+
     if (accounts.find(name) != accounts.end()) {
         std::cout << "Счет с таким именем уже существует!\n";
         return;
     }
 
-    accounts[name] = Account(name);
+    accounts.emplace(std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name));
     std::cout << "Счет создан!\n";
 }
 
@@ -175,6 +191,8 @@ void FinanceCore::createAccount() {
  * @warning При отмене currentAccount не изменяется
  */
 void FinanceCore::selectAccount() {
+   // std::lock_guard<std::mutex> lock(accounts_mutex_); // Блокировка
+
     if (accounts.empty()) {
         std::cout << "Нет доступных счетов.\n";
         return;
@@ -204,7 +222,7 @@ void FinanceCore::selectAccount() {
 
     auto it = accounts.begin();
     std::advance(it, choice - 1);
-    currentAccount = &(it->second);
+    currentAccount = &accounts.at(it->first);
     std::cout << "Выбран счет: " << it->first << "\n";
 }
 
@@ -216,7 +234,9 @@ void FinanceCore::selectAccount() {
  * @throws std::logic_error При попытке удалить последний счет
  */
 void FinanceCore::deleteAccount() {
-    if (accounts.size() <= 1) { // Нельзя удалить последний счет
+   // std::lock_guard<std::mutex> lock(accounts_mutex_); // Блокировка
+
+    if (accounts.size() <= 1) {
         std::cout << "Должен остаться хотя бы один счет!\n";
         return;
     }
@@ -247,7 +267,7 @@ void FinanceCore::deleteAccount() {
 
     // Если удаляем текущий счет, переключаемся на "Общий"
     if (currentAccount == &(it->second)) {
-        currentAccount = &accounts["Общий"];
+        currentAccount = &accounts.at("Общий");
     }
 
     accounts.erase(it);
@@ -263,6 +283,8 @@ void FinanceCore::deleteAccount() {
  * @note Для "Общего" счета создает копию, а не переименовывает
  */
 void FinanceCore::renameAccount() {
+    //std::lock_guard<std::mutex> lock(accounts_mutex_); // Блокировка
+
     std::cout << "\n=== Переименование счета ===\n";
     std::cout << "Текущее имя: " << currentAccount->get_name() << "\n";
     std::cout << "Новое имя (или 0 для отмены): ";
@@ -281,16 +303,18 @@ void FinanceCore::renameAccount() {
         return;
     }
 
-    // Создаем новый счет с перенесенными данными
-    accounts[newName] = std::move(*currentAccount);
-    accounts[newName].set_name(newName);
+    // Создаем новый счет с перемещением транзакций
+    accounts.emplace(std::piecewise_construct,
+        std::forward_as_tuple(newName),
+        std::forward_as_tuple(newName));
+    accounts.at(newName).move_transactions_from(std::move(*currentAccount));
 
     // Удаляем старую запись (если это не "Общий" счет)
     if (currentAccount->get_name() != "Общий") {
         accounts.erase(currentAccount->get_name());
     }
 
-    currentAccount = &accounts[newName];
+    currentAccount = &accounts.at(newName);
     std::cout << "Счет переименован.\n";
 }
 
@@ -353,55 +377,58 @@ void FinanceCore::printMainMenu() const {
     std::cout << "\033[2J\033[1;1H"; // ANSI escape codes
 #endif
 
-    std::cout << "+----------------------------+\n";
-    std::cout << "|     ФИНАНСОВЫЙ МЕНЕДЖЕР     |\n";
-    std::cout << "+----------------------------+\n";
+    double total_balance = 0;
+    double current_account_balance = 0;
+    for (const auto& [name, account] : accounts) {
+        total_balance += account.get_balance_in_currency(currency_converter_, base_currency_);
+    }
+    if (currentAccount) {
+        current_account_balance = currentAccount->get_balance_in_currency(currency_converter_, base_currency_);
+    }
 
-    // Форматируем вывод с фиксированной длиной
-    std::string accountName = currentAccount->get_name();
-    if (accountName.length() > 15) accountName = accountName.substr(0, 12) + "...";
 
-    std::cout << "| Текущий счёт: " << std::left << std::setw(12) << accountName
-        << " | Баланс: " << std::setw(8) << std::fixed << std::setprecision(2)
-        << currentAccount->get_balance() << " |\n";
-    std::cout << "+----------------------------+\n";
-    std::cout << "| 1. Добавить транзакцию      |\n";
-    std::cout << "| 2. Просмотреть историю      |\n";
-    std::cout << "| 3. Статистика               |\n";
-    std::cout << "| 4. Управление счетами       |\n";
-    std::cout << "| 5. Удалить транзакцию       |\n";
-    std::cout << "| 0. Выход                    |\n";
-    std::cout << "+----------------------------+\n";
+    std::cout << "+-------------------------------+\n";
+    std::cout << "|      ФИНАНСОВЫЙ МЕНЕДЖЕР     |\n";
+    std::cout << "+-------------------------------+\n";
+    std::cout << "| Основная валюта: " << std::left << std::setw(11) << base_currency_ << " |\n";
+    std::cout << "| Общий баланс: " << std::setw(14) << std::fixed << std::setprecision(2) << total_balance << " |\n";
+    std::cout << "| Текущий счёт: " << std::setw(14) << currentAccount->get_name() << " |\n";
+    std::cout << "| Баланс счета:    " << std::setw(11) << current_account_balance << " |\n";
+    std::cout << "+-------------------------------+\n";
+    std::cout << "| 1. Добавить транзакцию        |\n";
+    std::cout << "| 2. Просмотреть историю        |\n";
+    std::cout << "| 3. Статистика                 |\n";
+    std::cout << "| 4. Управление счетами         |\n";
+    std::cout << "| 5. Удалить транзакцию         |\n";
+    std::cout << "| 6. Обновить курсы валют       |\n";
+    std::cout << "| 7. Изменить основную валюту   |\n";
+    std::cout << "| 8. Баланс по валютам          |\n";
+    std::cout << "| 0. Выход                      |\n";
+    std::cout << "+-------------------------------+\n";
     std::cout << "> Выберите действие: ";
 }
 
-/**
- * @brief Отображает меню транзакций
- * @deprecated Будет заменено на runTransactionMenu()
- */
-void FinanceCore::printTransactionMenu() const {
-    std::cout << "\n--- История транзакций ---\n"
-        << "1. Все транзакции\n"
-        << "2. Только доходы\n"
-        << "3. Только расходы\n"
-        << "4. Сортировать по дате\n"
-        << "5. Сортировать по сумме\n"
-        << "6. Назад\n"
-        << "Выберите действие: ";
+void FinanceCore::showCurrencyMenu() {
+    std::cout << "\nДоступные валюты:\n";
+    int i = 1;
+    std::vector<std::string> currencies;
 
-}
+    // Получаем список поддерживаемых валют
+    currencies.push_back("RUB");
+    currencies.push_back("USD");
+    currencies.push_back("EUR");
+    // Можно добавить другие валюты
 
-/**
- * @brief Отображает меню статистики
- * @deprecated Будет заменено на runStatsMenu()
- */
-void FinanceCore::printStatsMenu() const {
-    std::cout << "\n--- Меню статистики ---\n"
-        << "1. Общий баланс\n"
-        << "2. По категориям\n"
-        << "3. По месяцам\n"
-        << "4. Топ-5 расходов\n"
-        << "5. Назад\n"
-        << "Выберите действие: ";
+    for (const auto& curr : currencies) {
+        std::cout << i++ << ". " << curr << "\n";
+    }
 
+    std::cout << "Выберите валюту (0 - отмена): ";
+    int choice;
+    std::cin >> choice;
+
+    if (choice > 0 && choice <= currencies.size()) {
+        setBaseCurrency(currencies[choice - 1]);
+        std::cout << "Основная валюта изменена на " << currencies[choice - 1] << "\n";
+    }
 }

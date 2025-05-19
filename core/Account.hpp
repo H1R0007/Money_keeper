@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file Account.hpp
  * @brief Заголовочный файл класса Account для управления финансовым счетом
  * @author Сонин Михаил/Эксузян Давид
@@ -27,8 +27,16 @@ private:
     std::string name;       ///< Название счета
     double balance;         ///< Текущий баланс (в базовой валюте)
     std::vector<Transaction> transactions;  //!< Список транзакций
+    mutable std::mutex transactions_mutex;
+
+    Account(const Account&) = delete;
+    Account& operator=(const Account&) = delete;
 
 public:
+
+    Account(Account&&) = default;
+    Account& operator=(Account&&) = default;
+
     /**
      * @brief Конструктор по умолчанию
      * @details Создает счет с именем "Без названия" и нулевым балансом
@@ -39,7 +47,7 @@ public:
      * @brief Конструктор с именем счета
      * @param accountName Название создаваемого счета
      */
-    Account(const std::string& accountName) : name(accountName), balance(0) {}
+    explicit Account(const std::string& accountName) : name(accountName), balance(0) {}
 
     /**
      * @brief Добавляет транзакцию на счет
@@ -54,7 +62,7 @@ public:
      * @return true если транзакция была найдена и удалена
      * @post Баланс счета автоматически пересчитывается
      */
-    void removeTransaction(int id);
+    bool removeTransaction(int id);
 
     /**
      * @brief Перемещает транзакции из другого счета
@@ -67,7 +75,7 @@ public:
      * @brief Пересчитывает текущий баланс
      * @details Суммирует все транзакции для вычисления актуального баланса
      */
-    void recalculateBalance();
+    void recalculateBalance(const CurrencyConverter& converter);
 
     /**
      * @brief Получает название счета
@@ -92,4 +100,10 @@ public:
      * @return Константная ссылка на вектор транзакций
      */
     const std::vector<Transaction>& get_transactions() const { return transactions; }
+
+    double get_balance_in_currency(const CurrencyConverter& converter,
+        const std::string& currency) const;
+
+    bool validate(const CurrencyConverter& converter) const;
+    void merge_account(Account&& other, const CurrencyConverter& converter);
 };

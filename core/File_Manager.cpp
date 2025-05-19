@@ -10,6 +10,10 @@
 #include <fstream>
 #include <filesystem>
 
+bool starts_with(const std::string& str, const std::string& prefix) {
+    return str.size() >= prefix.size() &&
+        str.compare(0, prefix.size(), prefix) == 0;
+}
  /**
   * @brief Сохраняет все данные аккаунтов в файл
   * @details Формат файла:
@@ -29,7 +33,7 @@
   * @endcode
   */
 void FinanceCore::saveData() {
-    std::ofstream file("transactions.dat");
+    std::ofstream file(dataFile); // Используем dataFile
     if (!file) {
         std::cerr << "ОШИБКА: Не могу открыть файл для записи!\n";
         return;
@@ -41,7 +45,7 @@ void FinanceCore::saveData() {
             file << t << "\n";
         }
     }
-    std::cout << "Данные сохранены в: " << std::filesystem::absolute("transactions.dat") << "\n";
+    std::cout << "Данные сохранены в: " << std::filesystem::absolute(dataFile) << "\n";
 }
 
 /**
@@ -57,53 +61,105 @@ void FinanceCore::saveData() {
  *
  * @warning При обнаружении некорректных транзакций они пропускаются с выводом ошибки
  */
+
 void FinanceCore::loadData() {
-    std::ifstream file(dataFile);
-    accounts.clear(); // Очищаем существующие счета
+    accounts.clear();
+    accounts.emplace(std::piecewise_construct,
+        std::forward_as_tuple("Общий"),
+        std::forward_as_tuple("Общий"));
+    currentAccount = &accounts.at("Общий");
 
-    // Создаем общий счет по умолчанию
-    accounts["Общий"] = Account("Общий");
-    currentAccount = &accounts["Общий"];
-
-    if (!file.is_open()) {
-        std::cerr << "Файл данных не найден. Создан новый общий счет.\n";
+    std::cout << "[DEBUG] Загрузка данных...\n";
+    if (!std::filesystem::exists(dataFile)) {
+        std::cout << "[DEBUG] Файл не существует, создан аккаунт 'Общий'\n";
         return;
     }
 
-    std::string currentAccountName;
+    std::ifstream file(dataFile);
+    if (!file.is_open()) {
+        std::cerr << "[DEBUG] Ошибка открытия файла\n";
+        throw std::runtime_error("Не могу открыть файл данных");
+    }
+
     std::string line;
-    bool hasValidData = false;
+    std::string currentAccountName = "Общий";
+    bool hasConversionNeeded = false;
+    int max_id = 0; // Для отслеживания максимального ID
 
     while (std::getline(file, line)) {
+        std::cout << "[DEBUG] Прочитана строка: " << line << "\n";
         if (line.empty()) continue;
 
-        // Обработка заголовка аккаунта
-        if (line.find("[Account:") != std::string::npos) {
-            size_t start = line.find(':') + 1;
+        if (starts_with(line, "[Account:")) {
             size_t end = line.find(']');
             if (end == std::string::npos) continue;
 
-            currentAccountName = line.substr(start, end - start);
-            accounts[currentAccountName] = Account(currentAccountName);
-            hasValidData = true;
+            currentAccountName = line.substr(9, end - 9);
+            if (accounts.find(currentAccountName) == accounts.end()) {
+                accounts.emplace(std::piecewise_construct,
+                    std::forward_as_tuple(currentAccountName),
+                    std::forward_as_tuple(currentAccountName));
+            }
+            continue;
         }
-        // Обработка транзакции
-        else if (!currentAccountName.empty()) {
-            try {
-                std::istringstream iss(line);
-                Transaction t;
-                if (iss >> t) {
-                    accounts[currentAccountName].addTransaction(t);
-                }
+
+        Transaction t;
+        try {
+            std::istringstream iss(line);
+            std::string field;
+            std::vector<std::string> fields;
+
+            while (std::getline(iss, field, ',')) {
+                if (!field.empty()) fields.push_back(field);
             }
-            catch (const std::exception& e) {
-                std::cerr << "Ошибка чтения транзакции: " << e.what()
-                    << "\nСтрока: " << line << "\n";
+
+            if (fields.size() < 6) throw std::runtime_error("Недостаточно полей");
+
+            // Парсим ID и обновляем max_id
+            t.id = std::stoi(fields[0]);
+            if (t.id > max_id) max_id = t.id;
+
+            // Остальной парсинг
+            t.amount = std::stod(fields[1]);
+            t.type = static_cast<Transaction::Type>(std::stoi(fields[2]));
+            t.category = fields[3];
+
+            std::istringstream date_iss(fields[4]);
+            int y, m, d;
+            date_iss >> y >> m >> d;
+            t.date = Date(y, m, d);
+
+            if (fields.size() > 5) {
+                t.currency_ = fields[5];
+                t.currency_.erase(0, t.currency_.find_first_not_of(" \t"));
+                t.currency_.erase(t.currency_.find_last_not_of(" \t") + 1);
+                if (t.currency_.empty()) t.currency_ = "RUB";
             }
+            else {
+                t.currency_ = "RUB";
+                hasConversionNeeded = true;
+            }
+
+            t.description = (fields.size() > 6) ? fields[6] : "--";
+            t.description.erase(0, t.description.find_first_not_of(" \t"));
+            t.description.erase(t.description.find_last_not_of(" \t") + 1);
+
+            accounts[currentAccountName].addTransaction(t);
+        }
+        catch (const std::exception& e) {
+            std::cerr << "Ошибка чтения транзакции: " << e.what()
+                << "\nСтрока: " << line << "\n";
         }
     }
 
-    if (!hasValidData) {
-        std::cerr << "В файле нет валидных данных. Используется общий счет по умолчанию.\n";
+    // Устанавливаем next_id для новых транзакций
+    if (max_id > 0) {
+        Transaction::next_id = max_id + 1;
+        std::cout << "[DEBUG] Установлено next_id: " << Transaction::next_id << "\n";
+    }
+
+    // Пересчитываем балансы
+    for (auto& [name, account] : accounts) {
+        account.recalculateBalance(currency_converter_);
     }
 }

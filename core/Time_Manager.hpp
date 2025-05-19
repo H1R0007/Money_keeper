@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file Time_Manager.hpp
  * @brief Класс для работы с финансовыми транзакциями
  * @author Сонин Михаил/Эксузян Давид
@@ -11,6 +11,7 @@
 #include <iostream>
 #include <stdexcept>
 #include "Date.hpp"
+#include "currency/CurrencyConverter.hpp"
 
  /**
   * @class Transaction
@@ -25,7 +26,7 @@
   * @note Автоматически генерирует уникальные ID для транзакций
   */
 class Transaction {
-
+    friend class FinanceCore;
 public:
     /**
      * @enum Type
@@ -108,7 +109,9 @@ public:
 
 
     void set_type(Type t) { type = t; }                ///< Устанавливает тип транзакции
-    void set_description(const std::string& desc) { description = desc; } ///< Устанавливает описание
+    void set_description(const std::string& desc) {
+        description = desc.empty() ? "--" : desc;
+    } ///< Устанавливает описание
     void set_id(int new_id) { id = new_id; }           ///< Устанавливает ID (для загрузки из файла)
 
     /**
@@ -143,6 +146,7 @@ public:
             << static_cast<int>(t.type) << ","
             << t.category << ","
             << t.date << ","
+            << t.currency_ << ","  // Добавлено сохранение валюты
             << t.description;
         return os;
     }
@@ -178,8 +182,9 @@ public:
                 throw std::runtime_error("Ошибка чтения даты");
             }
             t.date = Date(y, m, d);
-
+            
             // Остаток строки - описание
+            std::getline(iss, t.currency_, ',');
             std::getline(iss, t.description);
         }
         catch (const std::exception& e) {
@@ -190,6 +195,45 @@ public:
         return is;
     }
 
+    static bool parseFromString(const std::string& str, Transaction& out) {
+        std::istringstream iss(str);
+        char delim;
+        try {
+            if (!(iss >> out.id >> delim >> out.amount >> delim)) return false;
+
+            int type;
+            if (!(iss >> type >> delim)) return false;
+            out.type = static_cast<Type>(type);
+
+            std::getline(iss, out.category, ',');
+
+            int y, m, d;
+            if (!(iss >> y >> m >> d >> delim)) return false;
+            out.date = Date(y, m, d);
+
+            if (!std::getline(iss, out.currency_, ',')) return false;
+            std::getline(iss, out.description);
+
+            return true;
+        }
+        catch (...) {
+            return false;
+        }
+    }
+
+    void set_currency(const std::string& currency) {
+        currency_ = currency;
+    }
+
+    double get_amount_in_rub(const CurrencyConverter& converter) const {
+        return converter.convert(amount, currency_, "RUB");
+        return converter.convert(amount, currency_, "RUB");
+    }
+
+
+    // Геттеры
+    const std::string& get_currency() const { return currency_; }
+
 private:
     static inline int next_id = 1; ///< Счетчик для автоинкремента ID
     int id;             ///< Уникальный идентификатор
@@ -198,6 +242,7 @@ private:
     Type type;          ///< Тип (доход/расход)
     Date date;          ///< Дата транзакции
     std::string description; ///< Описание (опционально)
+    std::string currency_ = "RUB";
 
     /**
      * @brief Валидация данных транзакции

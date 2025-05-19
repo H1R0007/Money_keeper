@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file Date.hpp
  * @brief Заголовочный файл класса Date для работы с датами
  * @author Сонин Михаил/Эксузян Давид
@@ -85,6 +85,15 @@ public:
 			<< std::setw(2) << std::setfill('0') << month << "-"
 			<< std::setw(2) << std::setfill('0') << day;
 		return oss.str();
+	}
+
+	static Date from_string(const std::string& date_str) {
+		// Формат: "YYYY-MM-DD"
+		int y, m, d;
+		char dash;
+		std::istringstream iss(date_str);
+		iss >> y >> dash >> m >> dash >> d;
+		return Date(y, m, d);
 	}
 
 	/**

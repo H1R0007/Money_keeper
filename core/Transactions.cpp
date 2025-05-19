@@ -1,4 +1,4 @@
-
+﻿
 /**
  * @file Transactions.cpp
  * @brief Реализация методов работы с транзакциями
@@ -6,6 +6,7 @@
 
 #include "FinanceCore.hpp"
 #include <Windows.h>
+#include <iomanip>
 
  /**
   * @brief Добавляет новую транзакцию через интерактивный диалог
@@ -40,7 +41,6 @@
 
 // Добавление/удаление
 void FinanceCore::addTransaction() {
-
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
 
@@ -48,25 +48,20 @@ void FinanceCore::addTransaction() {
     int step = 1;
     bool cancelled = false;
 
-    while (step <= 5 && !cancelled) {
+    while (step <= 6 && !cancelled) { // Увеличили количество шагов до 6
         try {
             switch (step) {
-            case 1: { // Шаг 1: Тип операции
+
+            case 1: { // Тип операции
                 std::cout << "\n=== Новая транзакция ===\n";
                 std::cout << "1. Доход\n2. Расход\n0. Отмена\nВыберите тип: ";
-                int type;
-                std::cin >> type;
+                int type = getMenuChoice();
 
                 if (type == 0) {
                     cancelled = true;
                     std::cout << "Отменено.\n";
                     break;
                 }
-
-                if (type != 1 && type != 2) {
-                    throw std::invalid_argument("Неверный тип операции");
-                }
-
                 newTrans.set_type(type == 1 ? Transaction::Type::INCOME : Transaction::Type::EXPENSE);
                 step++;
                 break;
@@ -83,15 +78,26 @@ void FinanceCore::addTransaction() {
                     break;
                 }
 
+                // Проверка поддержки валюты
+                std::cout << "Введите валюту (RUB, USD, EUR): ";
+                std::string currency;
+                std::cin >> currency;
+
+                if (!currency_converter_.is_currency_supported(currency)) {
+                    std::cout << "Валюта не поддерживается. Используется RUB\n";
+                    currency = "RUB";
+                }
+
                 newTrans.set_amount(amount);
+                newTrans.set_currency(currency);
                 step++;
                 break;
             }
 
-            case 3: { // Шаг 3: Категория
+            case 3: { // Категория
                 std::cout << "Введите категорию (0 для отмены): ";
                 std::string category;
-                std::cin.ignore();
+                clearInputBuffer();
                 std::getline(std::cin, category);
 
                 if (category == "0") {
@@ -99,54 +105,43 @@ void FinanceCore::addTransaction() {
                     std::cout << "Отменено.\n";
                     break;
                 }
-
                 newTrans.set_category(category);
                 step++;
                 break;
             }
 
-            case 4: {
-                std::cout << "Дата (гггг-мм-дд, 0 для текущей, -1 для отмены): ";
+            case 4: { // Дата
+                std::cout << "Дата (гггг-мм-дд, enter для текущей, 0 для отмены): ";
                 std::string date_str;
-                std::cin >> date_str;
+                std::cin.ignore(0);
+                std::getline(std::cin, date_str);
 
-                if (date_str == "-1") {
+                if (date_str == "0") {
                     cancelled = true;
+                    std::cout << "Отменено.\n";
                     break;
                 }
 
-                if (date_str == "0") {
-                    // Используем текущую дату
-                    step++;
+                if (date_str.empty()) {
+                    step++; // Используем текущую дату по умолчанию
                     break;
                 }
 
                 try {
-                    // Парсим дату из строки ГГГГ-ММ-ДД
-                    size_t dash1 = date_str.find('-');
-                    size_t dash2 = date_str.rfind('-');
-
-                    if (dash1 == std::string::npos || dash2 == std::string::npos || dash1 == dash2) {
-                        throw std::invalid_argument("Неверный формат даты");
-                    }
-
-                    int y = std::stoi(date_str.substr(0, dash1));
-                    int m = std::stoi(date_str.substr(dash1 + 1, dash2 - dash1 - 1));
-                    int d = std::stoi(date_str.substr(dash2 + 1));
-
-                    newTrans.set_date(Date(y, m, d));
+                    auto date = Date::from_string(date_str);
+                    newTrans.set_date(date);
                     step++;
                 }
                 catch (...) {
-                    std::cerr << "Ошибка: некорректная дата. Используйте формат ГГГГ-ММ-ДД\n";
+                    throw std::invalid_argument("Неверный формат даты. Используйте ГГГГ-ММ-ДД");
                 }
                 break;
             }
 
-            case 5: { // Шаг 5: Описание
-                std::cout << "Введите описание (опционально, 0 для отмены): ";
+            case 5: { // Описание
+                std::cout << "Введите описание (enter чтобы пропустить, 0 для отмены): ";
                 std::string desc;
-                std::cin.ignore();
+                clearInputBuffer();
                 std::getline(std::cin, desc);
 
                 if (desc == "0") {
@@ -154,25 +149,36 @@ void FinanceCore::addTransaction() {
                     std::cout << "Отменено.\n";
                     break;
                 }
-
                 newTrans.set_description(desc);
-
-                // Финализация
+                step++;
+                break;
+            }
+            case 6: { // Шаг 6: Финализация и сохранение
+                // Добавляем транзакцию
                 currentAccount->addTransaction(newTrans);
-                std::cout << "Транзакция успешно добавлена!\n";
+
+                // Показываем сумму в рублях для информации
+                double rubAmount = currency_converter_.convert(
+                    newTrans.get_amount(),
+                    newTrans.get_currency(),
+                    "RUB"
+                );
+
+                std::cout << "Транзакция добавлена!\n"
+                    << "Сумма: " << newTrans.get_amount() << " " << newTrans.get_currency()
+                    << " (≈" << std::fixed << std::setprecision(2) << rubAmount << " RUB)\n";
                 step++;
                 break;
             }
             }
         }
         catch (const std::exception& e) {
-            std::cerr << "Ошибка: " << e.what() << "\nПопробуйте снова.\n";
+            std::cerr << "Ошибка: " << e.what() << "\n";
             std::cin.clear();
-            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            clearInputBuffer();
         }
     }
 }
-
 /**
  * @brief Удаляет транзакцию по ID
  * @details Процесс:
@@ -186,9 +192,10 @@ void FinanceCore::addTransaction() {
  * @note Поддерживает отмену операции (ввод 0)
  */
 void FinanceCore::removeTransaction() {
-
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCP(CP_UTF8);
+
+    //std::lock_guard<std::mutex> lock(accounts_mutex_);
 
     if (currentAccount->get_transactions().empty()) {
         std::cout << "Нет транзакций для удаления.\n";
@@ -197,13 +204,16 @@ void FinanceCore::removeTransaction() {
 
     viewAllTransactions();
     std::cout << "Введите ID транзакции для удаления (0 для отмены): ";
-    int id;
-    std::cin >> id;
+    int id = getMenuChoice();
 
     if (id == 0) return;
 
-    currentAccount->removeTransaction(id);
-    std::cout << "Транзакция удалена.\n";
+    if (currentAccount->removeTransaction(id)) {
+        std::cout << "Транзакция удалена.\n";
+    }
+    else {
+        std::cout << "Транзакция с ID " << id << " не найдена.\n";
+    }
 }
 
 
@@ -230,18 +240,19 @@ void FinanceCore::printTransactionsTable(const std::vector<Transaction>& transac
     }
 
     std::cout << "\n=== " << title << " (" << transactions.size() << ") ===\n";
-    std::cout << "+------+----------+------------+------------+--------------+\n";
-    std::cout << "|  ID  |   Дата   |   Сумма    | Категория  |  Описание    |\n";
-    std::cout << "+------+----------+------------+------------+--------------+\n";
+    std::cout << "+------+------------+----------+------------+------------+--------------+\n";
+    std::cout << "|  ID  |    Дата    |   Тип    |   Сумма    |  Валюта    |  Категория   |\n";
+    std::cout << "+------+------------+----------+------------+------------+--------------+\n";
 
     for (const auto& t : transactions) {
         std::cout << "| " << std::setw(4) << t.get_id() << " | "
             << t.get_date().to_string() << " | "
-            << std::setw(10) << t.get_amount() << " | "
-            << std::setw(10) << t.get_category().substr(0, 10) << " | "
-            << std::setw(12) << t.get_description().substr(0, 12) << " |\n";
+            << std::setw(8) << (t.get_type() == Transaction::Type::INCOME ? "Доход" : "Расход") << " | "
+            << std::setw(10) << std::fixed << std::setprecision(2) << t.get_amount() << " | "
+            << std::setw(10) << t.get_currency() << " | "
+            << std::setw(12) << (t.get_category().empty() ? "-" : t.get_category().substr(0, 12)) << " |\n";
     }
-    std::cout << "+------+----------+------------+------------+--------------+\n";
+    std::cout << "+------+------------+----------+------------+------------+--------------+\n" << std::flush;
 }
 
 /**
@@ -296,17 +307,18 @@ void FinanceCore::viewAllTransactions() const {
     clearConsole();
 
     std::cout << "\n=== Все транзакции ===\n";
-    std::cout << "+------+----------+----------+----------+------------+--------------+\n";
-    std::cout << "|  ID  |   Дата   |   Тип    |  Сумма   | Категория  |  Описание    |\n";
-    std::cout << "+------+----------+----------+----------+------------+--------------+\n";
+    std::cout << "+------+------------+----------+------------+------------+--------------+--------------+\n";
+    std::cout << "|  ID  |    Дата    |   Тип    |   Сумма    |  Валюта    |  Категория   |  Описание    |\n";
+    std::cout << "+------+------------+----------+------------+------------+--------------+--------------+\n";
 
     for (const auto& t : currentAccount->get_transactions()) {
         std::cout << "| " << std::setw(4) << t.get_id() << " | "
             << t.get_date().to_string() << " | "
-            << (t.get_type() == Transaction::Type::INCOME ? "Доход " : "Расход") << " | "
-            << std::setw(8) << std::fixed << std::setprecision(2) << t.get_amount() << " | "
-            << std::setw(10) << (t.get_category().size() > 10 ? t.get_category().substr(0, 7) + "..." : t.get_category()) << " | "
-            << std::setw(12) << (t.get_description().size() > 12 ? t.get_description().substr(0, 9) + "..." : t.get_description()) << " |\n";
+            << std::setw(8) << (t.get_type() == Transaction::Type::INCOME ? "Доход" : "Расход") << " | "
+            << std::setw(10) << std::fixed << std::setprecision(2) << t.get_amount() << " | "
+            << std::setw(10) << t.get_currency() << " | "
+            << std::setw(12) << (t.get_category().empty() ? "-" : t.get_category()) << " | "
+            << std::setw(12) << (t.get_description().empty() ? "-" : t.get_description()) << " |\n";
     }
-    std::cout << "+------+----------+----------+----------+------------+--------------+\n" << std::flush;
+    std::cout << "+------+------------+----------+------------+------------+--------------+--------------+\n" << std::flush;
 }
