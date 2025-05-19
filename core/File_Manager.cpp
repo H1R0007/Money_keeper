@@ -10,6 +10,15 @@
 #include <fstream>
 #include <filesystem>
 
+static std::string join_strings(const std::vector<std::string>& vec, const char delimiter) {
+    std::string result;
+    for (size_t i = 0; i < vec.size(); ++i) {
+        if (i != 0) result += delimiter;
+        result += vec[i];
+    }
+    return result;
+}
+
 bool starts_with(const std::string& str, const std::string& prefix) {
     return str.size() >= prefix.size() &&
         str.compare(0, prefix.size(), prefix) == 0;
@@ -33,7 +42,7 @@ bool starts_with(const std::string& str, const std::string& prefix) {
   * @endcode
   */
 void FinanceCore::saveData() {
-    std::ofstream file(dataFile); // Используем dataFile
+    std::ofstream file(dataFile);
     if (!file) {
         std::cerr << "ОШИБКА: Не могу открыть файл для записи!\n";
         return;
@@ -42,7 +51,14 @@ void FinanceCore::saveData() {
     for (const auto& [name, account] : accounts) {
         file << "[Account:" << name << "]\n";
         for (const auto& t : account.get_transactions()) {
-            file << t << "\n";
+            file << t.get_id() << ","
+                << t.get_amount() << ","
+                << static_cast<int>(t.get_type()) << ","
+                << t.get_category() << ","
+                << t.get_date() << ","
+                << t.get_currency() << ","
+                << t.get_description() << ","
+                << (t.get_tags().empty() ? "-" : join_strings(t.get_tags(), ';')) << "\n";
         }
     }
     std::cout << "Данные сохранены в: " << std::filesystem::absolute(dataFile) << "\n";
@@ -144,6 +160,16 @@ void FinanceCore::loadData() {
             t.description.erase(0, t.description.find_first_not_of(" \t"));
             t.description.erase(t.description.find_last_not_of(" \t") + 1);
 
+
+            if (fields.size() > 7 && fields[7] != "-") {
+                std::istringstream tags_stream(fields[7]);
+                std::string tag;
+                while (std::getline(tags_stream, tag, ';')) {
+                    if (!tag.empty()) {
+                        t.add_tag(tag);
+                    }
+                }
+            }
             accounts[currentAccountName].addTransaction(t);
         }
         catch (const std::exception& e) {

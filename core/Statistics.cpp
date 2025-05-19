@@ -238,3 +238,36 @@ void FinanceCore::showBalanceByCurrency() const {
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     std::cin.get();
 }
+
+void FinanceCore::searchByTags(const std::vector<std::string>& tags) const {
+    if (tags.empty()) {
+        std::cout << "\nОшибка: Не указаны теги для поиска\n";
+        std::cout << "Нажмите Enter для продолжения...";
+        std::cin.ignore();
+        std::cin.get();
+        return;
+    }
+
+    std::vector<Transaction> result;
+
+    for (const auto& [name, account] : accounts) {
+        for (const auto& t : account.get_transactions()) {
+            const auto& transaction_tags = t.get_tags();
+            if (std::any_of(tags.begin(), tags.end(),
+                [&](const auto& tag) {
+                    return std::find(transaction_tags.begin(),
+                        transaction_tags.end(), tag) != transaction_tags.end();
+                })) {
+                result.push_back(t);
+            }
+        }
+    }
+
+    clearConsole();
+    printTransactionsTable(result, "Результаты поиска по тегам");
+
+    // Добавляем паузу перед возвратом в меню
+    std::cout << "\nНажмите Enter для возврата в меню...";
+    std::cin.ignore();
+    std::cin.get();
+}

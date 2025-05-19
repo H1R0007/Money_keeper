@@ -55,6 +55,12 @@ public:
     {
     }
 
+    Transaction(const Transaction& other)
+        : id(other.id), amount(other.amount), category(other.category),
+        type(other.type), date(other.date), description(other.description),
+        currency_(other.currency_), tags_(other.tags_) {
+    }
+
     /**
     * @brief Основной конструктор
     * @param amt Сумма (должна быть > 0)
@@ -195,38 +201,11 @@ public:
         return is;
     }
 
-    static bool parseFromString(const std::string& str, Transaction& out) {
-        std::istringstream iss(str);
-        char delim;
-        try {
-            if (!(iss >> out.id >> delim >> out.amount >> delim)) return false;
-
-            int type;
-            if (!(iss >> type >> delim)) return false;
-            out.type = static_cast<Type>(type);
-
-            std::getline(iss, out.category, ',');
-
-            int y, m, d;
-            if (!(iss >> y >> m >> d >> delim)) return false;
-            out.date = Date(y, m, d);
-
-            if (!std::getline(iss, out.currency_, ',')) return false;
-            std::getline(iss, out.description);
-
-            return true;
-        }
-        catch (...) {
-            return false;
-        }
-    }
-
     void set_currency(const std::string& currency) {
         currency_ = currency;
     }
 
     double get_amount_in_rub(const CurrencyConverter& converter) const {
-        return converter.convert(amount, currency_, "RUB");
         return converter.convert(amount, currency_, "RUB");
     }
 
@@ -234,7 +213,31 @@ public:
     // Геттеры
     const std::string& get_currency() const { return currency_; }
 
+    void Transaction::add_tag(const std::string& tag) {
+        if (tags_.size() >= MAX_TAGS) {
+            throw std::runtime_error("Достигнут лимит тегов (" + std::to_string(MAX_TAGS) + ")");
+        }
+        if (std::find(tags_.begin(), tags_.end(), tag) != tags_.end()) {
+            throw std::runtime_error("Тег '" + tag + "' уже добавлен");
+        }
+        tags_.push_back(tag);
+    }
+
+    const std::vector<std::string>& get_tags() const { return tags_; }
+    static const std::vector<std::string>& get_available_tags(); // Предопределенные теги
+
+    void remove_tag(size_t index) {
+        if (index < tags_.size()) {
+            tags_.erase(tags_.begin() + index);
+        }
+    }
+
+
 private:
+
+    std::vector<std::string> tags_; // Новое поле
+    static constexpr size_t MAX_TAGS = 5; // Макс. количество тегов
+
     static inline int next_id = 1; ///< Счетчик для автоинкремента ID
     int id;             ///< Уникальный идентификатор
     double amount;      ///< Сумма (> 0)

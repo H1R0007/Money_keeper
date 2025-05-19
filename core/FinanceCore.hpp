@@ -134,4 +134,7 @@ public:
     void update_currency_rates(std::function<void(bool success)> callback);
     double convert_currency(double amount, const std::string& from,
         const std::string& to = "RUB") const;
+
+    void searchByTags(const std::vector<std::string>& tags) const;
+    void runSearchMenu();
 };

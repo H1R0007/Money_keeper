@@ -66,6 +66,9 @@ void FinanceCore::runMainMenu() {
         case 8:
             showBalanceByCurrency();
             break;
+        case 9:
+            runSearchMenu();
+            break;
         case 0:
             saveData();
             std::cout << "+----------------------------+\n";
@@ -403,6 +406,7 @@ void FinanceCore::printMainMenu() const {
     std::cout << "| 6. Обновить курсы валют       |\n";
     std::cout << "| 7. Изменить основную валюту   |\n";
     std::cout << "| 8. Баланс по валютам          |\n";
+    std::cout << "| 9. Поиск по тегам             |\n";
     std::cout << "| 0. Выход                      |\n";
     std::cout << "+-------------------------------+\n";
     std::cout << "> Выберите действие: ";
@@ -430,5 +434,61 @@ void FinanceCore::showCurrencyMenu() {
     if (choice > 0 && choice <= currencies.size()) {
         setBaseCurrency(currencies[choice - 1]);
         std::cout << "Основная валюта изменена на " << currencies[choice - 1] << "\n";
+    }
+}
+
+void FinanceCore::runSearchMenu() {
+    const auto& available_tags = Transaction::get_available_tags();
+    std::vector<std::string> selected_tags;
+
+    while (true) {
+        clearConsole();
+        std::cout << "\n=== Поиск по тегам ===";
+        std::cout << "\nВыбранные теги: ";
+        for (const auto& tag : selected_tags) std::cout << "[" << tag << "] ";
+
+        std::cout << "\n\nДоступные теги:\n";
+        for (size_t i = 0; i < available_tags.size(); ++i) {
+            std::cout << i + 1 << ". " << available_tags[i] << "\n";
+        }
+
+        std::cout << "\n" << available_tags.size() + 1 << ". Начать поиск\n";
+        std::cout << available_tags.size() + 2 << ". Очистить выбор\n";
+        std::cout << "0. Назад\nВыберите действие: ";
+
+        int choice = getMenuChoice();
+
+        if (choice == 0) {
+            break;
+        }
+        else if (choice == available_tags.size() + 1) { // Поиск
+            if (selected_tags.empty()) {
+                std::cout << "Не выбрано ни одного тега!\n";
+                std::cout << "Нажмите Enter для продолжения...";
+                std::cin.ignore();
+                std::cin.get();
+            }
+            else {
+                searchByTags(selected_tags);
+                // После поиска остаемся в меню выбора тегов
+            }
+        }
+        else if (choice == available_tags.size() + 2) { // Очистка
+            selected_tags.clear();
+        }
+        else if (choice > 0 && choice <= available_tags.size()) {
+            const std::string& selected_tag = available_tags[choice - 1];
+            if (std::find(selected_tags.begin(), selected_tags.end(), selected_tag) == selected_tags.end()) {
+                if (selected_tags.size() < Transaction::MAX_TAGS) {
+                    selected_tags.push_back(selected_tag);
+                }
+                else {
+                    std::cout << "Достигнут лимит выбранных тегов (" << Transaction::MAX_TAGS << ")\n";
+                    std::cout << "Нажмите Enter для продолжения...";
+                    std::cin.ignore();
+                    std::cin.get();
+                }
+            }
+        }
     }
 }

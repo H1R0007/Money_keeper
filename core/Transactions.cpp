@@ -48,7 +48,7 @@ void FinanceCore::addTransaction() {
     int step = 1;
     bool cancelled = false;
 
-    while (step <= 6 && !cancelled) { // Увеличили количество шагов до 6
+    while (step <= 7 && !cancelled) { // Увеличили количество шагов до 6
         try {
             switch (step) {
 
@@ -153,20 +153,103 @@ void FinanceCore::addTransaction() {
                 step++;
                 break;
             }
-            case 6: { // Шаг 6: Финализация и сохранение
-                // Добавляем транзакцию
+            case 6: { // Шаг 6: Теги
+                const auto& available_tags = Transaction::get_available_tags();
+                bool tag_adding_finished = false;
+
+                while (!tag_adding_finished) {
+                    clearConsole();
+                    std::cout << "\n=== Управление тегами ("
+                        << newTrans.get_tags().size() << "/"
+                        << Transaction::MAX_TAGS << ") ===\n";
+
+                    // Вывод текущих тегов
+                    if (!newTrans.get_tags().empty()) {
+                        std::cout << "Текущие теги: ";
+                        for (size_t i = 0; i < newTrans.get_tags().size(); ++i) {
+                            std::cout << (i > 0 ? ", " : "") << "[" << newTrans.get_tags()[i] << "]";
+                        }
+                        std::cout << "\n\n";
+                    }
+
+                    // Вывод доступных тегов
+                    std::cout << "Доступные теги:\n";
+                    for (size_t i = 0; i < available_tags.size(); ++i) {
+                        std::cout << i + 1 << ". " << available_tags[i] << "\n";
+                    }
+
+                    std::cout << "\n0. Завершить добавление тегов\n";
+                    if (!newTrans.get_tags().empty()) {
+                        std::cout << "99. Удалить тег\n";
+                    }
+                    std::cout << "Выберите действие: ";
+
+                    int choice = getMenuChoice();
+
+                    if (choice == 0) {
+                        tag_adding_finished = true;
+                        step++;
+                    }
+                    else if (choice == 99 && !newTrans.get_tags().empty()) {
+                        // Удаление тега
+                        std::cout << "Выберите тег для удаления:\n";
+                        for (size_t i = 0; i < newTrans.get_tags().size(); ++i) {
+                            std::cout << i + 1 << ". " << newTrans.get_tags()[i] << "\n";
+                        }
+                        std::cout << "0. Отмена\n> ";
+
+                        int tag_choice = getMenuChoice();
+                        if (tag_choice > 0 && tag_choice <= newTrans.get_tags().size()) {
+                            newTrans.remove_tag(tag_choice - 1); // Используем новый метод
+                        }
+                    }
+                    else if (choice > 0 && choice <= available_tags.size()) {
+                        // Добавление тега
+                        try {
+                            const std::string& selected_tag = available_tags[choice - 1];
+                            if (std::find(newTrans.get_tags().begin(), newTrans.get_tags().end(), selected_tag)
+                                != newTrans.get_tags().end()) {
+                                std::cout << "Этот тег уже добавлен!\n";
+                            }
+                            else if (newTrans.get_tags().size() >= Transaction::MAX_TAGS) {
+                                std::cout << "Достигнут лимит тегов (" << Transaction::MAX_TAGS << ")\n";
+                            }
+                            else {
+                                newTrans.add_tag(selected_tag); // Используем новый метод
+                            }
+                        }
+                        catch (const std::exception& e) {
+                            std::cerr << "Ошибка: " << e.what() << "\n";
+                        }
+                        std::cout << "Нажмите Enter для продолжения...";
+                        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                        std::cin.get();
+                    }
+                }
+                break;
+            }
+
+            case 7: { // Финализация
                 currentAccount->addTransaction(newTrans);
 
-                // Показываем сумму в рублях для информации
                 double rubAmount = currency_converter_.convert(
                     newTrans.get_amount(),
                     newTrans.get_currency(),
                     "RUB"
                 );
 
-                std::cout << "Транзакция добавлена!\n"
+                std::cout << "\nТранзакция добавлена!\n"
                     << "Сумма: " << newTrans.get_amount() << " " << newTrans.get_currency()
                     << " (≈" << std::fixed << std::setprecision(2) << rubAmount << " RUB)\n";
+
+                if (!newTrans.get_tags().empty()) {
+                    std::cout << "Теги: ";
+                    for (const auto& tag : newTrans.get_tags()) {
+                        std::cout << "[" << tag << "] ";
+                    }
+                    std::cout << "\n";
+                }
+
                 step++;
                 break;
             }
@@ -176,6 +259,9 @@ void FinanceCore::addTransaction() {
             std::cerr << "Ошибка: " << e.what() << "\n";
             std::cin.clear();
             clearInputBuffer();
+            std::cout << "Нажмите Enter для продолжения...";
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cin.get();
         }
     }
 }
@@ -321,4 +407,18 @@ void FinanceCore::viewAllTransactions() const {
             << std::setw(12) << (t.get_description().empty() ? "-" : t.get_description()) << " |\n";
     }
     std::cout << "+------+------------+----------+------------+------------+--------------+--------------+\n" << std::flush;
+}
+
+const std::vector<std::string>& Transaction::get_available_tags() {
+    static const std::vector<std::string> TAGS = {
+        "продукты", "супермаркет", "ресторан",
+        "транспорт", "такси", "метро", "бензин",
+        "развлечения", "кино", "концерт", "хобби",
+        "здоровье", "аптека", "врач", "спортзал",
+        "образование", "книги", "курсы",
+        "коммуналка", "электричество", "интернет",
+        "аренда", "ремонт", "одежда",
+        "подарки", "путешествия", "другое"
+    };
+    return TAGS;
 }
