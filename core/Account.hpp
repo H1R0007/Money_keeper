@@ -9,6 +9,7 @@
  /// @see Transaction Класс транзакции
  /// @see FinanceCore Основной класс приложения
 #pragma once
+#include "Time_Manager.hpp"
 #include <iostream>
 #include <string>
 #include <stdexcept>

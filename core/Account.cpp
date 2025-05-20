@@ -6,8 +6,6 @@
  */
 
 #include "Account.hpp"
-#include "currency/CurrencyConverter.hpp"
-#include "Time_Manager.hpp"
 #include <algorithm>
 
  /**
