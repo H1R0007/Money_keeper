@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.17)
 project(FinanceManager)
 
 set(CMAKE_TOOLCHAIN_FILE "C:/Users/Zeta/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
@@ -62,16 +62,12 @@ add_executable(FinanceManager
     core/currency/curl/CurlHttpClient.hpp
  "docs/mainpage.h")
 
-# Äëÿ Windows (MinGW)
-if (MINGW)
-    set(CMAKE_EXE_LINKER_FLAGS "-static -static-libgcc -static-libstdc++")
-endif()
-
 if(WIN32)
     add_compile_definitions(NOMINMAX)
 endif()
 
 target_include_directories(FinanceManager PRIVATE core)
+
 
 find_package(CURL REQUIRED)
 target_link_libraries(FinanceManager PRIVATE
