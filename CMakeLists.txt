@@ -59,8 +59,7 @@ add_executable(FinanceManager
     core/currency/CurrencyConverter.hpp
     core/currency/CurrencyFetcher.hpp
     core/currency/curl/CurlHttpClient.cpp
-    core/currency/curl/CurlHttpClient.hpp
- "docs/mainpage.h")
+    core/currency/curl/CurlHttpClient.hpp)
 
 if(WIN32)
     add_compile_definitions(NOMINMAX)
