@@ -21,6 +21,7 @@
 #include <algorithm>
 #include "Account.hpp"
 #include "currency/CurrencyConverter.hpp"
+#include <filesystem>
 
  /**
   * @class FinanceCore
@@ -43,6 +44,13 @@ private:
     void printMainMenu() const;         ///< Выводит главное меню
 
 public:
+    void FinanceCore::ensureDataDirectory() {
+        std::filesystem::path dataDir = std::filesystem::path(dataFile).parent_path();
+        if (!std::filesystem::exists(dataDir)) {
+            std::filesystem::create_directories(dataDir);
+        }
+    }
+    std::string getDataPath(const std::string& filename);
 
     void showCurrencyMenu();
     void showBalanceByCurrency() const;

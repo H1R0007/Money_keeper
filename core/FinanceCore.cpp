@@ -23,6 +23,13 @@
   * @return Ссылка на текущий счет
   * @warning Не возвращает nullptr (гарантирует валидный счет)
   */
+
+std::string FinanceCore::getDataPath(const std::string& filename) {
+    std::filesystem::path exePath = std::filesystem::current_path(); 
+    std::filesystem::path dataPath = exePath / "data" / filename; 
+    return dataPath.string();
+}
+
 Account& FinanceCore::getCurrentAccount() {
    // std::lock_guard<std::mutex> lock(accounts_mutex_);
     if (!currentAccount) {
@@ -71,7 +78,7 @@ FinanceCore::FinanceCore() {
     catch (...) {
         try {
             // Fallback для Windows и других систем
-            dataPath = std::filesystem::current_path() / "transactions.dat";
+            dataPath = getDataPath("transactions.dat");
         }
         catch (...) {
             // Аварийный fallback
@@ -82,6 +89,8 @@ FinanceCore::FinanceCore() {
     dataFile = dataPath.string(); // Сохраняем как строку
 
     std::cout << "Файл данных будет сохранен в: " << dataFile << std::endl;
+
+    ensureDataDirectory();
 
     std::filesystem::create_directories("CurrencyDat");
 
