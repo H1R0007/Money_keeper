@@ -12,8 +12,8 @@ void CurrencyFetcher::fetch_rates(RatesCallback callback) {
     CurlHttpClient::Get(url, [this, callback](const std::string& json, bool success) {
         std::unordered_map<std::string, double> rates;
         if (!success) {
-            std::cerr << "[ERROR] Ошибка загрузки курсов валют\n";
-            callback({}); // Возвращаем пустой список
+            std::cerr << "[ERROR] ������ �������� ������ �����\n";
+            callback({}); // ���������� ������ ������
             return;
         }
 
@@ -32,14 +32,14 @@ bool CurrencyFetcher::parse_json(const std::string& json_str, std::unordered_map
             return false;
         }
 
-        // Основные валюты
+        // �������� ������
         for (const auto& item : data["Valute"]) {
             std::string code = item["CharCode"];
             double rate = item["Value"].get<double>() / item["Nominal"].get<double>();
             rates[code] = rate;
         }
 
-        // Добавляем рубли
+        // ��������� �����
         rates["RUB"] = 1.0;
         return true;
     }

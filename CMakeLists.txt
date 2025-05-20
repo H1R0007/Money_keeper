@@ -4,7 +4,7 @@ project(FinanceManager)
 set(CMAKE_TOOLCHAIN_FILE "C:/Users/Zeta/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 set(CMAKE_CXX_STANDARD 17)
 
-# Находим doxygen.exe
+# ������� doxygen.exe
 find_program(DOXYGEN_EXE 
     NAMES doxygen.exe doxygen
     PATHS "${CMAKE_SOURCE_DIR}/src/doxygen/bin"
@@ -14,10 +14,10 @@ find_program(DOXYGEN_EXE
 if(DOXYGEN_EXE)
     message(STATUS "Found Doxygen: ${DOXYGEN_EXE}")
     
-    # Указываем правильный путь к Doxyfile
+    # ��������� ���������� ���� � Doxyfile
     set(DOXYFILE_PATH "${CMAKE_SOURCE_DIR}/docs/Doxyfile")
     
-    # Проверяем существование Doxyfile
+    # ��������� ������������� Doxyfile
     if(EXISTS "${DOXYFILE_PATH}")
         message(STATUS "Found Doxyfile: ${DOXYFILE_PATH}")
         
@@ -28,7 +28,7 @@ if(DOXYGEN_EXE)
             VERBATIM
         )
         
-        # Создаем удобную команду для генерации
+        # ������� ������� ������� ��� ���������
         add_custom_command(
             TARGET docs
             POST_BUILD

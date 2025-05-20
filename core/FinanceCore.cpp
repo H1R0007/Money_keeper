@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @file FinanceCore.cpp
  * @brief Реализация методов FinanceCore
  */

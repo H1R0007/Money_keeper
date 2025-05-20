@@ -10,7 +10,7 @@ void CurrencyConverter::update_rates(std::function<void(bool)> callback) {
     fetcher.fetch_rates([this, callback](const auto& new_rates) {
         std::lock_guard<std::mutex> lock(rates_mutex_);
         rates_ = new_rates;
-        std::cout << "[DEBUG] Загружено курсов: " << rates_.size() << "\n";
+        std::cout << "[DEBUG] ��������� ������: " << rates_.size() << "\n";
         callback(!new_rates.empty());
         });
 }
@@ -19,7 +19,7 @@ double CurrencyConverter::convert(double amount, const std::string& from, const 
     std::lock_guard<std::mutex> lock(rates_mutex_);
 
     if (from == to) return amount;
-    if (rates_.empty()) throw std::runtime_error("Курсы валют не загружены");
+    if (rates_.empty()) throw std::runtime_error("����� ����� �� ���������");
 
     return amount * rates_.at(from) / rates_.at(to);
 }
