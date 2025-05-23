@@ -4,41 +4,34 @@ project(FinanceManager)
 set(CMAKE_TOOLCHAIN_FILE "C:/Users/Zeta/vcpkg/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
 set(CMAKE_CXX_STANDARD 17)
 
-# ������� doxygen.exe
-find_program(DOXYGEN_EXE 
-    NAMES doxygen.exe doxygen
-    PATHS "${CMAKE_SOURCE_DIR}/src/doxygen/bin"
-    NO_DEFAULT_PATH
-)
+# Настройка документации
+set(DOXYGEN_PATH "C:/Users/Zeta/source/external/doxygen/bin/doxygen.exe")
+set(GRAPHVIZ_PATH "C:/Users/Zeta/source/external/Graphviz/bin/dot.exe")
+set(DOXYFILE_PATH "C:/Users/Zeta/source/external/docs/Doxyfile")
 
-if(DOXYGEN_EXE)
-    message(STATUS "Found Doxygen: ${DOXYGEN_EXE}")
+if(EXISTS ${DOXYGEN_PATH})
+    message(STATUS "Found Doxygen: ${DOXYGEN_PATH}")
     
-    # ��������� ���������� ���� � Doxyfile
-    set(DOXYFILE_PATH "${CMAKE_SOURCE_DIR}/docs/Doxyfile")
-    
-    # ��������� ������������� Doxyfile
-    if(EXISTS "${DOXYFILE_PATH}")
-        message(STATUS "Found Doxyfile: ${DOXYFILE_PATH}")
-        
-        add_custom_target(docs
-            COMMAND "${DOXYGEN_EXE}" "${DOXYFILE_PATH}"
-            WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-            COMMENT "Generating documentation using ${DOXYGEN_EXE}"
-            VERBATIM
-        )
-        
-        # ������� ������� ������� ��� ���������
-        add_custom_command(
-            TARGET docs
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E echo "Documentation generated in ${CMAKE_SOURCE_DIR}/docs/html"
-        )
+    if(EXISTS ${GRAPHVIZ_PATH})
+        message(STATUS "Found Graphviz: ${GRAPHVIZ_PATH}")
     else()
-        message(WARNING "Doxyfile not found at ${DOXYFILE_PATH}")
+        message(WARNING "Graphviz not found - diagrams will be disabled")
     endif()
+
+    add_custom_target(docs
+        COMMAND ${DOXYGEN_PATH} ${DOXYFILE_PATH}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMENT "Generating documentation"
+        VERBATIM
+    )
+    
+    add_custom_command(
+        TARGET docs
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E echo "Documentation generated in ${CMAKE_SOURCE_DIR}/docs/html"
+    )
 else()
-    message(WARNING "Doxygen not found in ${CMAKE_SOURCE_DIR}/src/doxygen/bin")
+    message(WARNING "Doxygen not found at ${DOXYGEN_PATH} - documentation disabled")
 endif()
 
 
