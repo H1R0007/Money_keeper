@@ -1,15 +1,15 @@
 /**
  * @file CurrencyFetcher.cpp
- * @brief Р РµР°Р»РёР·Р°С†РёСЏ Р·Р°РіСЂСѓР·С‡РёРєР° РєСѓСЂСЃРѕРІ РІР°Р»СЋС‚
+ * @brief Реализация загрузчика курсов валют
  *
- * @details РћСЃСѓС‰РµСЃС‚РІР»СЏРµС‚:
- * - Р—Р°РіСЂСѓР·РєСѓ РґР°РЅРЅС‹С… СЃ СѓРґР°Р»РµРЅРЅРѕРіРѕ API
- * - РџР°СЂСЃРёРЅРі JSON-РѕС‚РІРµС‚Р°
- * - РќРѕСЂРјР°Р»РёР·Р°С†РёСЋ РєСѓСЂСЃРѕРІ РІР°Р»СЋС‚
- * - РћР±СЂР°Р±РѕС‚РєСѓ РѕС€РёР±РѕРє СЃРµС‚Рё Рё РїР°СЂСЃРёРЅРіР°
+ * @details Осуществляет:
+ * - Загрузку данных с удаленного API
+ * - Парсинг JSON-ответа
+ * - Нормализацию курсов валют
+ * - Обработку ошибок сети и парсинга
  *
- * @section data_source РСЃС‚РѕС‡РЅРёРє РґР°РЅРЅС‹С…
- * РСЃРїРѕР»СЊР·СѓРµС‚ РїСѓР±Р»РёС‡РЅРѕРµ API Р¦Р‘ Р Р¤ РїРѕ Р°РґСЂРµСЃСѓ:
+ * @section data_source Источник данных
+ * Использует публичное API ЦБ РФ по адресу:
  * https://www.cbr-xml-daily.ru/daily_json.js
  */
 
@@ -22,19 +22,19 @@
 using json = nlohmann::json;
 
 /**
- * @brief Р—Р°РіСЂСѓР¶Р°РµС‚ Р°РєС‚СѓР°Р»СЊРЅС‹Рµ РєСѓСЂСЃС‹ РІР°Р»СЋС‚
- * @param callback Р¤СѓРЅРєС†РёСЏ РѕР±СЂР°С‚РЅРѕРіРѕ РІС‹Р·РѕРІР° РґР»СЏ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
+ * @brief Загружает актуальные курсы валют
+ * @param callback Функция обратного вызова для результатов
  *
- * @details РђР»РіРѕСЂРёС‚Рј СЂР°Р±РѕС‚С‹:
- * 1. Р¤РѕСЂРјРёСЂСѓРµС‚ HTTP-Р·Р°РїСЂРѕСЃ Рє API Р¦Р‘ Р Р¤
- * 2. РџСЂРё РїРѕР»СѓС‡РµРЅРёРё РѕС‚РІРµС‚Р°:
- *    - Р’ СЃР»СѓС‡Р°Рµ СѓСЃРїРµС…Р° РїР°СЂСЃРёС‚ JSON
- *    - РќРѕСЂРјР°Р»РёР·СѓРµС‚ РєСѓСЂСЃС‹ (РґРµР»РёС‚ РЅР° РЅРѕРјРёРЅР°Р»)
- *    - Р”РѕР±Р°РІР»СЏРµС‚ RUB СЃ РєСѓСЂСЃРѕРј 1.0
- *    - РџРµСЂРµРґР°РµС‚ СЂРµР·СѓР»СЊС‚Р°С‚ РІ callback
- * 3. Р’ СЃР»СѓС‡Р°Рµ РѕС€РёР±РєРё РїРµСЂРµРґР°РµС‚ РїСѓСЃС‚РѕР№ СЂРµР·СѓР»СЊС‚Р°С‚
+ * @details Алгоритм работы:
+ * 1. Формирует HTTP-запрос к API ЦБ РФ
+ * 2. При получении ответа:
+ *    - В случае успеха парсит JSON
+ *    - Нормализует курсы (делит на номинал)
+ *    - Добавляет RUB с курсом 1.0
+ *    - Передает результат в callback
+ * 3. В случае ошибки передает пустой результат
  *
- * @note Р’СЃРµ РѕС€РёР±РєРё Р»РѕРіРёСЂСѓСЋС‚СЃСЏ РІ stderr
+ * @note Все ошибки логируются в stderr
  */
 void CurrencyFetcher::fetch_rates(RatesCallback callback) {
     const std::string url = "https://www.cbr-xml-daily.ru/daily_json.js";
@@ -42,7 +42,7 @@ void CurrencyFetcher::fetch_rates(RatesCallback callback) {
     CurlHttpClient::Get(url, [this, callback](const std::string& json, bool success) {
         std::unordered_map<std::string, double> rates;
         if (!success) {
-            std::cerr << "[ERROR] РћС€РёР±РєР° РїРѕР»СѓС‡РµРЅРёСЏ РєСѓСЂСЃРѕРІ РІР°Р»СЋС‚\n";
+            std::cerr << "[ERROR] Ошибка получения курсов валют\n";
             callback({});
             return;
         }
@@ -55,12 +55,12 @@ void CurrencyFetcher::fetch_rates(RatesCallback callback) {
 }
 
 /**
- * @brief РџР°СЂСЃРёС‚ JSON СЃ РєСѓСЂСЃР°РјРё РІР°Р»СЋС‚
- * @param json_str РЎС‚СЂРѕРєР° СЃ JSON-РґР°РЅРЅС‹РјРё
- * @param rates РЎСЃС‹Р»РєР° РЅР° СЃР»РѕРІР°СЂСЊ РґР»СЏ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
- * @return true РµСЃР»Рё РїР°СЂСЃРёРЅРі СѓСЃРїРµС€РµРЅ
+ * @brief Парсит JSON с курсами валют
+ * @param json_str Строка с JSON-данными
+ * @param rates Ссылка на словарь для результатов
+ * @return true если парсинг успешен
  *
- * @details РћР¶РёРґР°РµС‚ JSON РІ С„РѕСЂРјР°С‚Рµ:
+ * @details Ожидает JSON в формате:
  * {
  *   "Valute": {
  *     "USD": {"Value": 75.5, "Nominal": 1},
@@ -69,7 +69,7 @@ void CurrencyFetcher::fetch_rates(RatesCallback callback) {
  *   }
  * }
  *
- * @note РђРІС‚РѕРјР°С‚РёС‡РµСЃРєРё РґРѕР±Р°РІР»СЏРµС‚ RUB СЃ РєСѓСЂСЃРѕРј 1.0
+ * @note Автоматически добавляет RUB с курсом 1.0
  */
 bool CurrencyFetcher::parse_json(const std::string& json_str, std::unordered_map<std::string, double>& rates) {
     try {
@@ -79,14 +79,14 @@ bool CurrencyFetcher::parse_json(const std::string& json_str, std::unordered_map
             return false;
         }
 
-        // РћР±СЂР°Р±РѕС‚РєР° РєР°Р¶РґРѕР№ РІР°Р»СЋС‚С‹
+        // Обработка каждой валюты
         for (const auto& item : data["Valute"]) {
             std::string code = item["CharCode"];
             double rate = item["Value"].get<double>() / item["Nominal"].get<double>();
             rates[code] = rate;
         }
 
-        // Р”РѕР±Р°РІР»РµРЅРёРµ СЂСѓР±Р»СЏ
+        // Добавление рубля
         rates["RUB"] = 1.0;
         return true;
     }

@@ -1,27 +1,27 @@
 /**
  * @file CurlHttpClient.cpp
- * @brief Р РµР°Р»РёР·Р°С†РёСЏ HTTP-РєР»РёРµРЅС‚Р° РЅР° libcurl
+ * @brief Реализация HTTP-клиента на libcurl
  *
- * @details РќР°СЃС‚СЂРѕР№РєРё СЃРѕРµРґРёРЅРµРЅРёСЏ:
- * - РўР°Р№РјР°СѓС‚: 5 СЃРµРєСѓРЅРґ
- * - SSL verification: СЃС‚СЂРѕРіРёР№ СЂРµР¶РёРј
+ * @details Настройки соединения:
+ * - Таймаут: 5 секунд
+ * - SSL verification: строгий режим
  * - User-Agent: libcurl/{version}
- * - Redirects: Р·Р°РїСЂРµС‰РµРЅС‹
+ * - Redirects: запрещены
  */
 
 #include "CurlHttpClient.hpp"
 #include <curl/curl.h>
 
  /**
-  * @brief Callback-С„СѓРЅРєС†РёСЏ РґР»СЏ Р·Р°РїРёСЃРё РѕС‚РІРµС‚Р°
+  * @brief Callback-функция для записи ответа
   *
-  * @details РђР»РіРѕСЂРёС‚Рј СЂР°Р±РѕС‚С‹:
-  * 1. РџРѕР»СѓС‡Р°РµС‚ chunk РґР°РЅРЅС‹С… РѕС‚ libcurl
-  * 2. Р”РѕР±Р°РІР»СЏРµС‚ РІ СЃС‚СЂРѕРєСѓ-Р±СѓС„РµСЂ
-  * 3. Р’РѕР·РІСЂР°С‰Р°РµС‚ РєРѕР»РёС‡РµСЃС‚РІРѕ РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹С… Р±Р°Р№С‚
+  * @details Алгоритм работы:
+  * 1. Получает chunk данных от libcurl
+  * 2. Добавляет в строку-буфер
+  * 3. Возвращает количество обработанных байт
   *
-  * @note Р’С‹Р·С‹РІР°РµС‚СЃСЏ РјРЅРѕРіРѕРєСЂР°С‚РЅРѕ РІ С‚РµС‡РµРЅРёРµ РѕРґРЅРѕРіРѕ Р·Р°РїСЂРѕСЃР°
-  * @warning РќРµ РґРѕР»Р¶РµРЅ Р±СЂРѕСЃР°С‚СЊ РёСЃРєР»СЋС‡РµРЅРёСЏ (РѕРіСЂР°РЅРёС‡РµРЅРёРµ libcurl)
+  * @note Вызывается многократно в течение одного запроса
+  * @warning Не должен бросать исключения (ограничение libcurl)
   */
 size_t CurlHttpClient::write_callback(void* contents, size_t size, size_t nmemb, std::string* output) {
     size_t total = size * nmemb;
@@ -30,21 +30,21 @@ size_t CurlHttpClient::write_callback(void* contents, size_t size, size_t nmemb,
 }
 
 /**
- * @brief Р’С‹РїРѕР»РЅСЏРµС‚ HTTP GET Р·Р°РїСЂРѕСЃ
+ * @brief Выполняет HTTP GET запрос
  *
- * @details РџРѕС€Р°РіРѕРІР°СЏ РЅР°СЃС‚СЂРѕР№РєР° libcurl:
- * 1. РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ easy-СЃРµСЃСЃРёРё
- * 2. РЈСЃС‚Р°РЅРѕРІРєР° URL Рё callback
- * 3. РќР°СЃС‚СЂРѕР№РєР° SSL РїР°СЂР°РјРµС‚СЂРѕРІ
- * 4. РЈСЃС‚Р°РЅРѕРІРєР° С‚Р°Р№РјР°СѓС‚РѕРІ
- * 5. Р’С‹РїРѕР»РЅРµРЅРёРµ Р·Р°РїСЂРѕСЃР°
- * 6. РћС‡РёСЃС‚РєР° СЂРµСЃСѓСЂСЃРѕРІ
+ * @details Пошаговая настройка libcurl:
+ * 1. Инициализация easy-сессии
+ * 2. Установка URL и callback
+ * 3. Настройка SSL параметров
+ * 4. Установка таймаутов
+ * 5. Выполнение запроса
+ * 6. Очистка ресурсов
  *
- * @note РћСЃРѕР±РµРЅРЅРѕСЃС‚Рё РѕР±СЂР°Р±РѕС‚РєРё РѕС€РёР±РѕРє:
- * - РћС€РёР±РєРё CURL РїРµСЂРµРґР°СЋС‚СЃСЏ РІ callback РєР°Рє success=false
- * - РСЃРєР»СЋС‡РµРЅРёСЏ C++ Р»РѕРІСЏС‚СЃСЏ Рё РѕР±СЂР°Р±Р°С‚С‹РІР°СЋС‚СЃСЏ
+ * @note Особенности обработки ошибок:
+ * - Ошибки CURL передаются в callback как success=false
+ * - Исключения C++ ловятся и обрабатываются
  *
- * @warning РќРµ thread-safe РЅР° СѓСЂРѕРІРЅРµ libcurl (РЅСѓР¶РЅР° curl_global_init)
+ * @warning Не thread-safe на уровне libcurl (нужна curl_global_init)
  */
 bool CurlHttpClient::Get(const std::string& url, ResponseCallback callback) {
     CURL* curl = curl_easy_init();
@@ -56,8 +56,8 @@ bool CurlHttpClient::Get(const std::string& url, ResponseCallback callback) {
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
         curl_easy_setopt(curl, CURLOPT_TIMEOUT, 5L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L); // РџСЂРѕРІРµСЂСЏС‚СЊ SSL СЃРµСЂС‚РёС„РёРєР°С‚
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L); // РЎС‚СЂРѕРіР°СЏ РїСЂРѕРІРµСЂРєР° С…РѕСЃС‚Р°
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L); // Проверять SSL сертификат
+        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L); // Строгая проверка хоста
 
         CURLcode res = curl_easy_perform(curl);
         success = (res == CURLE_OK);
